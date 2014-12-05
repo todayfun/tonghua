@@ -1,0 +1,32 @@
+<h1>Listing gupiao_exceptions</h1>
+
+<table>
+  <tr>
+    <th>Code</th>
+    <th>Exception</th>
+    <th>Deal on</th>
+    <th>Sig</th>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @gupiao_exceptions.each do |gupiao_exception| %>
+  <tr>
+    <td><%= gupiao_exception.code %></td>
+    <td><%= gupiao_exception.exception %></td>
+    <td><%= gupiao_exception.deal_on %></td>
+    <td><%= gupiao_exception.sig %></td>
+    <td><%= link_to 'Show', gupiao_exception %></td>
+    <td><%= link_to 'Edit', edit_gupiao_exception_path(gupiao_exception) %></td>
+    <td><%= link_to 'Destroy', gupiao_exception, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+  </tr>
+<% end %>
+</table>
+<br/>
+<%= will_paginate @gupiao_exceptions %>
+<br />
+<%= "total: #{@gupiao_exceptions.total_entries}" %>
+<br />
+
+<%= link_to 'New Gupiao exception', new_gupiao_exception_path %>

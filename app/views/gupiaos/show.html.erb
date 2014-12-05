@@ -1,0 +1,35 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Name:</b>
+  <%= @gupiao.name %>
+</p>
+
+<p>
+  <b>Code:</b>
+  <%= @gupiao.code %>
+</p>
+
+<p>
+  <b>Trend:</b>
+  <%= @gupiao.trend %>
+</p>
+
+<p>
+  <b>Stamp:</b>
+  <%= @gupiao.stamp %>
+</p>
+
+<p>
+  <b>Status:</b>
+  <%= @gupiao.status %>
+</p>
+
+<p>
+  <b>Judge:</b>
+  <%= @gupiao.judge %>
+</p>
+
+
+<%= link_to 'Edit', edit_gupiao_path(@gupiao) %> |
+<%= link_to 'Back', gupiaos_path %>

@@ -1,0 +1,25 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Code:</b>
+  <%= @gupiao_exception.code %>
+</p>
+
+<p>
+  <b>Exception:</b>
+  <%= @gupiao_exception.exception %>
+</p>
+
+<p>
+  <b>Deal on:</b>
+  <%= @gupiao_exception.deal_on %>
+</p>
+
+<p>
+  <b>Sig:</b>
+  <%= @gupiao_exception.sig %>
+</p>
+
+
+<%= link_to 'Edit', edit_gupiao_exception_path(@gupiao_exception) %> |
+<%= link_to 'Back', gupiao_exceptions_path %>

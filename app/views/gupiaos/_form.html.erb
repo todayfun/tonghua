@@ -1,0 +1,41 @@
+<%= form_for(@gupiao) do |f| %>
+  <% if @gupiao.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@gupiao.errors.count, "error") %> prohibited this gupiao from being saved:</h2>
+
+      <ul>
+      <% @gupiao.errors.full_messages.each do |msg| %>
+        <li><%= msg %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= f.label :name %><br />
+    <%= f.text_field :name %>
+  </div>
+  <div class="field">
+    <%= f.label :code %><br />
+    <%= f.text_field :code %>
+  </div>
+  <div class="field">
+    <%= f.label :trend %><br />
+    <%= f.text_field :trend %>
+  </div>
+  <div class="field">
+    <%= f.label :stamp %><br />
+    <%= f.text_field :stamp %>
+  </div>
+  <div class="field">
+    <%= f.label :status %><br />
+    <%= f.text_field :status %>
+  </div>
+  <div class="field">
+    <%= f.label :judge %><br />
+    <%= f.text_field :judge %>
+  </div>
+  <div class="actions">
+    <%= f.submit %>
+  </div>
+<% end %>

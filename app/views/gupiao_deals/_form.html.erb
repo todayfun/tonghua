@@ -1,0 +1,73 @@
+<%= form_for(@gupiao_deal) do |f| %>
+  <% if @gupiao_deal.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@gupiao_deal.errors.count, "error") %> prohibited this gupiao_deal from being saved:</h2>
+
+      <ul>
+      <% @gupiao_deal.errors.full_messages.each do |msg| %>
+        <li><%= msg %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= f.label :name %><br />
+    <%= f.text_field :name %>
+  </div>
+  <div class="field">
+    <%= f.label :code %><br />
+    <%= f.text_field :code %>
+  </div>
+  <div class="field">
+    <%= f.label :pc %><br />
+    <%= f.text_field :pc %>
+  </div>
+  <div class="field">
+    <%= f.label :op %><br />
+    <%= f.text_field :op %>
+  </div>
+  <div class="field">
+    <%= f.label :vo %><br />
+    <%= f.text_field :vo %>
+  </div>
+  <div class="field">
+    <%= f.label :tu %><br />
+    <%= f.text_field :tu %>
+  </div>
+  <div class="field">
+    <%= f.label :hi %><br />
+    <%= f.text_field :hi %>
+  </div>
+  <div class="field">
+    <%= f.label :lo %><br />
+    <%= f.text_field :lo %>
+  </div>
+  <div class="field">
+    <%= f.label :la %><br />
+    <%= f.text_field :la %>
+  </div>
+  <div class="field">
+    <%= f.label :time %><br />
+    <%= f.datetime_select :time %>
+  </div>
+  <div class="field">
+    <%= f.label :sy %><br />
+    <%= f.text_field :sy %>
+  </div>
+  <div class="field">
+    <%= f.label :lt %><br />
+    <%= f.text_field :lt %>
+  </div>
+  <div class="field">
+    <%= f.label :sz %><br />
+    <%= f.text_field :sz %>
+  </div>
+  <div class="field">
+    <%= f.label :hs %><br />
+    <%= f.text_field :hs %>
+  </div>
+  <div class="actions">
+    <%= f.submit %>
+  </div>
+<% end %>

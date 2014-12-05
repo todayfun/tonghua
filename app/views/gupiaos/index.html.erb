@@ -1,0 +1,30 @@
+<h1>Listing gupiaos</h1>
+
+<table>
+  <tr>
+    <th>Name</th>
+    <th>Code</th>
+    <th>Trend</th>    
+    <th>Status</th>
+    <th>Judge</th>
+    <th></th>
+  </tr>
+
+<% @gupiaos.each do |gupiao| %>
+  <tr>
+    <td><%= gupiao.name %></td>
+    <td><%= gupiao.code %></td>
+    <td><%= gupiao.trend %></td>    
+    <td><%= gupiao.status %></td>
+    <td><%= gupiao.judge %></td>
+    <td><%= link_to 'Destroy', gupiao, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+<%= will_paginate @gupiaos %>
+<br />
+<%= "total: #{@gupiaos.total_entries}" %>
+<br />
+<%= link_to 'New Gupiao', new_gupiao_path %>

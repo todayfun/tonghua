@@ -1,0 +1,41 @@
+<h1>Listing gupiao_deals</h1>
+
+<table>
+  <tr>
+    <th>Name</th>
+    <th>Code</th>
+    <th>Pc昨收盘</th>
+    <th>Op今开盘</th>
+    <th>Vo成交量手</th>
+    <th>Tu成交额</th>
+    <th>Hi最高价</th>
+    <th>Lo最低价</th>
+    <th>La现价</th>
+    <th>Time</th>
+    <th></th>
+
+  </tr>
+
+<% @gupiao_deals.each do |gupiao_deal| %>
+  <tr>
+    <td><%= gupiao_deal.name %></td>
+    <td><%= gupiao_deal.code %></td>
+    <td><%= gupiao_deal.pc %></td>
+    <td><%= gupiao_deal.op %></td>
+    <td><%= gupiao_deal.vo %></td>
+    <td><%= gupiao_deal.tu %></td>
+    <td><%= gupiao_deal.hi %></td>
+    <td><%= gupiao_deal.lo %></td>
+    <td><%= gupiao_deal.la %></td>
+    <td><%= gupiao_deal.time %></td>
+    <td><%= link_to 'Destroy', gupiao_deal, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+<%= will_paginate @gupiao_deals %>
+<br />
+<%= "total: #{@gupiao_deals.total_entries}" %>
+<br />
+<%= link_to 'New Gupiao deal', new_gupiao_deal_path %>

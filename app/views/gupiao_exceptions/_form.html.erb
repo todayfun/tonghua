@@ -1,0 +1,33 @@
+<%= form_for(@gupiao_exception) do |f| %>
+  <% if @gupiao_exception.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@gupiao_exception.errors.count, "error") %> prohibited this gupiao_exception from being saved:</h2>
+
+      <ul>
+      <% @gupiao_exception.errors.full_messages.each do |msg| %>
+        <li><%= msg %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= f.label :code %><br />
+    <%= f.text_field :code %>
+  </div>
+  <div class="field">
+    <%= f.label :exception %><br />
+    <%= f.text_field :exception %>
+  </div>
+  <div class="field">
+    <%= f.label :deal_on %><br />
+    <%= f.date_select :deal_on %>
+  </div>
+  <div class="field">
+    <%= f.label :sig %><br />
+    <%= f.text_field :sig %>
+  </div>
+  <div class="actions">
+    <%= f.submit %>
+  </div>
+<% end %>

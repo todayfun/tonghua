@@ -1,0 +1,2 @@
+module GupiaoExceptionsHelper
+end
