@@ -2,7 +2,7 @@ class GupiaoDealsController < ApplicationController
   # GET /gupiao_deals
   # GET /gupiao_deals.json
   def index
-    @gupiao_deals = GupiaoDeal.paginate(:page => params[:page], :per_page => params[:per_page]||30)
+    @gupiao_deals = GupiaoDeal.paginate(:page => params[:page], :per_page => params[:per_page]||30).order("time desc")
 
     respond_to do |format|
       format.html # index.html.erb

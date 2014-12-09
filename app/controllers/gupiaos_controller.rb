@@ -3,6 +3,11 @@ class GupiaosController < ApplicationController
   # GET /gupiaos.json
   def index
     @gupiaos = Gupiao.paginate(:page => params[:page], :per_page => params[:per_page]||30)
+    if params[:judge]
+      @gupiaos = @gupiaos.where("judge is not null and judge <> '[]'")
+    elsif params[:stop]
+      @gupiaos = @gupiaos.where("status='STOP'")
+    end
 
     respond_to do |format|
       format.html # index.html.erb
