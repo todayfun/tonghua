@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20141205071943) do
+ActiveRecord::Schema.define(:version => 20141210015623) do
 
   create_table "gupiao_deals", :force => true do |t|
     t.string   "name"
@@ -54,5 +54,21 @@ ActiveRecord::Schema.define(:version => 20141205071943) do
     t.datetime "created_at", :null => false
     t.datetime "updated_at", :null => false
   end
+
+  create_table "yahoo_deals", :force => true do |t|
+    t.string  "code"
+    t.float   "open"
+    t.float   "close"
+    t.float   "high"
+    t.float   "low"
+    t.integer "volume"
+    t.float   "adj"
+    t.date    "on"
+    t.string  "sig"
+  end
+
+  add_index "yahoo_deals", ["code"], :name => "index_yahoo_deals_on_code"
+  add_index "yahoo_deals", ["on"], :name => "index_yahoo_deals_on_on"
+  add_index "yahoo_deals", ["sig"], :name => "index_yahoo_deals_on_sig"
 
 end

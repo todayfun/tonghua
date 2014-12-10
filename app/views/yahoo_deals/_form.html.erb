@@ -1,0 +1,49 @@
+<%= form_for(@yahoo_deal) do |f| %>
+  <% if @yahoo_deal.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@yahoo_deal.errors.count, "error") %> prohibited this yahoo_deal from being saved:</h2>
+
+      <ul>
+      <% @yahoo_deal.errors.full_messages.each do |msg| %>
+        <li><%= msg %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= f.label :code %><br />
+    <%= f.text_field :code %>
+  </div>
+  <div class="field">
+    <%= f.label :open %><br />
+    <%= f.text_field :open %>
+  </div>
+  <div class="field">
+    <%= f.label :close %><br />
+    <%= f.text_field :close %>
+  </div>
+  <div class="field">
+    <%= f.label :high %><br />
+    <%= f.text_field :high %>
+  </div>
+  <div class="field">
+    <%= f.label :low %><br />
+    <%= f.text_field :low %>
+  </div>
+  <div class="field">
+    <%= f.label :volume %><br />
+    <%= f.number_field :volume %>
+  </div>
+  <div class="field">
+    <%= f.label :adj %><br />
+    <%= f.text_field :adj %>
+  </div>
+  <div class="field">
+    <%= f.label :on %><br />
+    <%= f.date_select :on %>
+  </div>
+  <div class="actions">
+    <%= f.submit %>
+  </div>
+<% end %>

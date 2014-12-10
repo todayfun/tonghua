@@ -1,4 +1,7 @@
 Tonghua::Application.routes.draw do
+  resources :yahoo_deals
+
+
   resources :gupiaos
 
 

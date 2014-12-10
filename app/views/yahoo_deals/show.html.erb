@@ -1,0 +1,45 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Code:</b>
+  <%= @yahoo_deal.code %>
+</p>
+
+<p>
+  <b>Open:</b>
+  <%= @yahoo_deal.open %>
+</p>
+
+<p>
+  <b>Close:</b>
+  <%= @yahoo_deal.close %>
+</p>
+
+<p>
+  <b>High:</b>
+  <%= @yahoo_deal.high %>
+</p>
+
+<p>
+  <b>Low:</b>
+  <%= @yahoo_deal.low %>
+</p>
+
+<p>
+  <b>Volume:</b>
+  <%= @yahoo_deal.volume %>
+</p>
+
+<p>
+  <b>Adj:</b>
+  <%= @yahoo_deal.adj %>
+</p>
+
+<p>
+  <b>On:</b>
+  <%= @yahoo_deal.on %>
+</p>
+
+
+<%= link_to 'Edit', edit_yahoo_deal_path(@yahoo_deal) %> |
+<%= link_to 'Back', yahoo_deals_path %>

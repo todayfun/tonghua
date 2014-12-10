@@ -11,6 +11,8 @@ gem 'jquery-rails'
 
 gem 'will_paginate'
 
+gem 'yahoofinance', '~> 1.2.2'
+
 # To use ActiveModel has_secure_password
 # gem 'bcrypt-ruby', '~> 3.0.0'
 
