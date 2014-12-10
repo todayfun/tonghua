@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20141210015623) do
+ActiveRecord::Schema.define(:version => 20141210055837) do
 
   create_table "gupiao_deals", :force => true do |t|
     t.string   "name"
@@ -56,19 +56,13 @@ ActiveRecord::Schema.define(:version => 20141210015623) do
   end
 
   create_table "yahoo_deals", :force => true do |t|
-    t.string  "code"
-    t.float   "open"
-    t.float   "close"
-    t.float   "high"
-    t.float   "low"
-    t.integer "volume"
-    t.float   "adj"
-    t.date    "on"
-    t.string  "sig"
+    t.string "code"
+    t.text   "deals"
+    t.text   "trend"
+    t.text   "judge"
   end
 
   add_index "yahoo_deals", ["code"], :name => "index_yahoo_deals_on_code"
-  add_index "yahoo_deals", ["on"], :name => "index_yahoo_deals_on_on"
-  add_index "yahoo_deals", ["sig"], :name => "index_yahoo_deals_on_sig"
+  add_index "yahoo_deals", ["judge"], :name => "index_yahoo_deals_on_judge"
 
 end
