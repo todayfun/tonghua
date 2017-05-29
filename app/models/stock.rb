@@ -1,5 +1,15 @@
 class Stock < ActiveRecord::Base
-  attr_accessible :code, :stamp
+  attr_accessible :code, :stamp, :weekrise, :monthrise
+
+  def self.rise_trend(cnt=4)
+    stocks = Stock.all
+
+    stocks.each do |s|
+      monthrise = Monthline.rise_trend? s.code, cnt
+      weekrise = Weekline.rise_trend? s.code, cnt
+      s.update_attributes monthrise:monthrise, weekrise:weekrise
+    end
+  end
 
   def self.import
     us_stocks = %w{

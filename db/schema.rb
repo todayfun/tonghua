@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20170529155907) do
+ActiveRecord::Schema.define(:version => 20170529181927) do
 
   create_table "gupiao_deals", :force => true do |t|
     t.string   "name"
@@ -76,7 +76,12 @@ ActiveRecord::Schema.define(:version => 20170529155907) do
     t.string   "stamp"
     t.datetime "created_at", :null => false
     t.datetime "updated_at", :null => false
+    t.integer  "weekrise"
+    t.integer  "monthrise"
   end
+
+  add_index "stocks", ["monthrise"], :name => "index_stocks_on_monthrise"
+  add_index "stocks", ["weekrise"], :name => "index_stocks_on_weekrise"
 
   create_table "weeklines", :force => true do |t|
     t.string   "code"

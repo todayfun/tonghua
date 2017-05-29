@@ -73,4 +73,20 @@ class Monthline < ActiveRecord::Base
       end
     end
   end
+
+  def self.rise_trend?(code,cnt)
+    deals = Monthline.where("code=\"#{code}\"").order("day desc").limit(cnt+1)
+    if deals.size < cnt+1
+      return false
+    end
+
+    flg = true
+    deals[0...cnt].each_index do |idx|
+      flg &&= deals[idx].close > deals[idx].open
+      flg &&= deals[idx].close > deals[idx+1].close
+      break unless flg
+    end
+
+    flg
+  end
 end
