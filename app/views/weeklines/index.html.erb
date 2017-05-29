@@ -1,0 +1,35 @@
+<h1>Listing weeklines</h1>
+
+<table>
+  <tr>
+    <th>Code</th>
+    <th>Day</th>
+    <th>Open</th>
+    <th>Close</th>
+    <th>High</th>
+    <th>Low</th>
+    <th>Vol</th>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @weeklines.each do |weekline| %>
+  <tr>
+    <td><%= weekline.code %></td>
+    <td><%= weekline.day %></td>
+    <td><%= weekline.open %></td>
+    <td><%= weekline.close %></td>
+    <td><%= weekline.high %></td>
+    <td><%= weekline.low %></td>
+    <td><%= weekline.vol %></td>
+    <td><%= link_to 'Show', weekline %></td>
+    <td><%= link_to 'Edit', edit_weekline_path(weekline) %></td>
+    <td><%= link_to 'Destroy', weekline, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New Weekline', new_weekline_path %>

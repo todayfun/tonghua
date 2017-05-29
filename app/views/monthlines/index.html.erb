@@ -1,0 +1,35 @@
+<h1>Listing monthlines</h1>
+
+<table>
+  <tr>
+    <th>Code</th>
+    <th>Day</th>
+    <th>Open</th>
+    <th>Close</th>
+    <th>High</th>
+    <th>Low</th>
+    <th>Vol</th>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @monthlines.each do |monthline| %>
+  <tr>
+    <td><%= monthline.code %></td>
+    <td><%= monthline.day %></td>
+    <td><%= monthline.open %></td>
+    <td><%= monthline.close %></td>
+    <td><%= monthline.high %></td>
+    <td><%= monthline.low %></td>
+    <td><%= monthline.vol %></td>
+    <td><%= link_to 'Show', monthline %></td>
+    <td><%= link_to 'Edit', edit_monthline_path(monthline) %></td>
+    <td><%= link_to 'Destroy', monthline, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New Monthline', new_monthline_path %>

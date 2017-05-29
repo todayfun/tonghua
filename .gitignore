@@ -14,4 +14,6 @@
 /log/*.log
 /tmp
 /nbproject
+.DS_Store
+.idea/
 /Gemfile.lock

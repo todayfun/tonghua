@@ -1,0 +1,40 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Code:</b>
+  <%= @weekline.code %>
+</p>
+
+<p>
+  <b>Day:</b>
+  <%= @weekline.day %>
+</p>
+
+<p>
+  <b>Open:</b>
+  <%= @weekline.open %>
+</p>
+
+<p>
+  <b>Close:</b>
+  <%= @weekline.close %>
+</p>
+
+<p>
+  <b>High:</b>
+  <%= @weekline.high %>
+</p>
+
+<p>
+  <b>Low:</b>
+  <%= @weekline.low %>
+</p>
+
+<p>
+  <b>Vol:</b>
+  <%= @weekline.vol %>
+</p>
+
+
+<%= link_to 'Edit', edit_weekline_path(@weekline) %> |
+<%= link_to 'Back', weeklines_path %>

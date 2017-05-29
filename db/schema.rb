@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20141210055837) do
+ActiveRecord::Schema.define(:version => 20170529155907) do
 
   create_table "gupiao_deals", :force => true do |t|
     t.string   "name"
@@ -54,6 +54,45 @@ ActiveRecord::Schema.define(:version => 20141210055837) do
     t.datetime "created_at", :null => false
     t.datetime "updated_at", :null => false
   end
+
+  create_table "monthlines", :force => true do |t|
+    t.string   "code"
+    t.date     "day"
+    t.float    "open"
+    t.float    "close"
+    t.float    "high"
+    t.float    "low"
+    t.integer  "vol"
+    t.datetime "created_at", :null => false
+    t.datetime "updated_at", :null => false
+  end
+
+  add_index "monthlines", ["close"], :name => "index_monthlines_on_close"
+  add_index "monthlines", ["code", "day"], :name => "index_monthlines_on_code_and_day", :unique => true
+  add_index "monthlines", ["open"], :name => "index_monthlines_on_open"
+
+  create_table "stocks", :force => true do |t|
+    t.string   "code"
+    t.string   "stamp"
+    t.datetime "created_at", :null => false
+    t.datetime "updated_at", :null => false
+  end
+
+  create_table "weeklines", :force => true do |t|
+    t.string   "code"
+    t.date     "day"
+    t.float    "open"
+    t.float    "close"
+    t.float    "high"
+    t.float    "low"
+    t.integer  "vol"
+    t.datetime "created_at", :null => false
+    t.datetime "updated_at", :null => false
+  end
+
+  add_index "weeklines", ["close"], :name => "index_weeklines_on_close"
+  add_index "weeklines", ["code", "day"], :name => "index_weeklines_on_code_and_day", :unique => true
+  add_index "weeklines", ["open"], :name => "index_weeklines_on_open"
 
   create_table "yahoo_deals", :force => true do |t|
     t.string "code"

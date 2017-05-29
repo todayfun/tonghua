@@ -1,0 +1,40 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Code:</b>
+  <%= @monthline.code %>
+</p>
+
+<p>
+  <b>Day:</b>
+  <%= @monthline.day %>
+</p>
+
+<p>
+  <b>Open:</b>
+  <%= @monthline.open %>
+</p>
+
+<p>
+  <b>Close:</b>
+  <%= @monthline.close %>
+</p>
+
+<p>
+  <b>High:</b>
+  <%= @monthline.high %>
+</p>
+
+<p>
+  <b>Low:</b>
+  <%= @monthline.low %>
+</p>
+
+<p>
+  <b>Vol:</b>
+  <%= @monthline.vol %>
+</p>
+
+
+<%= link_to 'Edit', edit_monthline_path(@monthline) %> |
+<%= link_to 'Back', monthlines_path %>

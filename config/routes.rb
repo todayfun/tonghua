@@ -1,4 +1,13 @@
 Tonghua::Application.routes.draw do
+  resources :monthlines
+
+
+  resources :weeklines
+
+
+  resources :stocks
+
+
   resources :yahoo_deals
 
 

@@ -1,0 +1,45 @@
+<%= form_for(@weekline) do |f| %>
+  <% if @weekline.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@weekline.errors.count, "error") %> prohibited this weekline from being saved:</h2>
+
+      <ul>
+      <% @weekline.errors.full_messages.each do |msg| %>
+        <li><%= msg %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= f.label :code %><br />
+    <%= f.text_field :code %>
+  </div>
+  <div class="field">
+    <%= f.label :day %><br />
+    <%= f.date_select :day %>
+  </div>
+  <div class="field">
+    <%= f.label :open %><br />
+    <%= f.text_field :open %>
+  </div>
+  <div class="field">
+    <%= f.label :close %><br />
+    <%= f.text_field :close %>
+  </div>
+  <div class="field">
+    <%= f.label :high %><br />
+    <%= f.text_field :high %>
+  </div>
+  <div class="field">
+    <%= f.label :low %><br />
+    <%= f.text_field :low %>
+  </div>
+  <div class="field">
+    <%= f.label :vol %><br />
+    <%= f.number_field :vol %>
+  </div>
+  <div class="actions">
+    <%= f.submit %>
+  </div>
+<% end %>

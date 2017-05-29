@@ -1,0 +1,14 @@
+# 港股
+
+http://web.ifzq.gtimg.cn/appstock/app/hkfqkline/get?_var=kline_dayqfq&param=hk02318,day,,,320,qfq
+
+http://web.ifzq.gtimg.cn/appstock/app/hkfqkline/get?_var=kline_weekqfq&param=hk02318,week,,,320,qfq
+
+http://web.ifzq.gtimg.cn/appstock/app/hkfqkline/get?_var=kline_monthqfq&param=hk02318,month,,,320,qfq
+
+# 美股
+http://web.ifzq.gtimg.cn/appstock/app/usfqkline/get?_var=kline_dayqfq&param=usZX.N,day,,,320,qfq
+
+http://web.ifzq.gtimg.cn/appstock/app/usfqkline/get?_var=kline_weekqfq&param=usZX.N,week,,,320,qfq
+
+http://web.ifzq.gtimg.cn/appstock/app/usfqkline/get?_var=kline_monthqfq&param=usZX.N,month,,,320,qfq
