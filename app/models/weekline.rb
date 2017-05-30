@@ -93,14 +93,14 @@ class Weekline < ActiveRecord::Base
 
     if rise_cnt==cnt && flg
       return @@RISE_CONTINUE
-    elsif flg && rise_cnt > cnt-2
+    elsif flg
       # 如果没有连续上涨，则要看回调了多少 或 反弹了多少
       close_arr = Weekline.where(code:code).order("day desc").select(:close).limit(52).map(&:close)
       max_close = close_arr.max
       min_close = close_arr.min
 
       # 反弹的
-      return @@RISE_REBOUND if (deals[0].close - min_close) > min_close * 0.2
+      return @@RISE_REBOUND if rise_cnt>(cnt-2)&&(deals[0].close - min_close) > min_close * 0.20
 
       # 超跌的
       return @@RISE_OVERSOLD if (max_close - deals[0].close) > max_close * 0.3
