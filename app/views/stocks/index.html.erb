@@ -3,17 +3,13 @@
 <table>
   <tr>
     <th>Code</th>
-    <th>Stamp</th>
-    <th></th>
-    <th></th>
+
   </tr>
 
 <% @stocks.each do |stock| %>
   <tr>
     <td><%= link_to stock.code, stockurl(stock.code,stock.stamp), :target=>'_blank' %></td>
-    <td><%= stock.stamp %></td>
-    <td><%= link_to 'Show', stock %></td>
-    <td><%= link_to 'Edit', edit_stock_path(stock) %></td>
+
   </tr>
 <% end %>
 </table>

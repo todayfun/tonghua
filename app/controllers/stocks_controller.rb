@@ -2,7 +2,7 @@ class StocksController < ApplicationController
   # GET /stocks
   # GET /stocks.json
   def index
-    @stocks = Stock.where("weekrise=1 and monthrise=1")
+    @stocks = Stock.where(weekrise:1)#.where(monthrise:1)
 
     respond_to do |format|
       format.html # index.html.erb
