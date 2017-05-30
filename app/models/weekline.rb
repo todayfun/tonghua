@@ -1,6 +1,10 @@
 class Weekline < ActiveRecord::Base
   attr_accessible :close, :code, :day, :high, :low, :open, :vol
 
+  @@RISE_CONTINUE=1
+  @@RISE_OVERSOLD=2
+  @@RISE_REBOUND=3
+
   def self.import
     oneweekago_day = 1.week.ago.beginning_of_week.strftime('%Y-%m-%d')
     imported_codes = Weekline.where("`day`>\"#{oneweekago_day}\"").select("distinct `code`").map &:code
@@ -73,19 +77,35 @@ class Weekline < ActiveRecord::Base
     end
   end
 
-  def self.rise_trend?(code,cnt)
+  def self.rise_trend(code,cnt)
     deals = Weekline.where("code=\"#{code}\"").order("day desc").limit(cnt+1)
     if deals.size < cnt+1
       return false
     end
 
     flg = true
+    rise_cnt = 0
     deals[0...cnt].each_index do |idx|
       flg &&= deals[idx].close > deals[idx].open
-      flg &&= deals[idx].close > deals[idx+1].close
+      rise_cnt+=1 if deals[idx].close > deals[idx+1].close
       break unless flg
     end
 
-    flg
+    if rise_cnt==cnt && flg
+      return @@RISE_CONTINUE
+    elsif flg
+      # 如果没有连续上涨，则要看回调了多少 或 反弹了多少
+      close_arr = Weekline.where(code:code).order("day desc").select(:close).limit(52).map(&:close)
+      max_close = close_arr.max
+      min_close = close_arr.min
+
+      # 反弹的
+      return @@RISE_REBOUND if (deals[0].close - min_close) > min_close * 0.2
+
+      # 超跌的
+      return @@RISE_OVERSOLD if (max_close - deals[0].close) > max_close * 0.2
+    end
+
+    return 0
   end
 end

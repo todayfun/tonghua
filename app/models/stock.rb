@@ -6,7 +6,7 @@ class Stock < ActiveRecord::Base
 
     stocks.each do |s|
       monthrise = Monthline.rise_trend? s.code, monthcnt
-      weekrise = Weekline.rise_trend? s.code, weekcnt
+      weekrise = Weekline.rise_trend s.code, weekcnt
       s.update_attributes monthrise:monthrise, weekrise:weekrise
     end
   end
