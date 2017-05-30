@@ -8,7 +8,7 @@
 
 <% @stocks.each do |stock| %>
   <tr>
-    <td><%= link_to stock.code, stockurl(stock.code,stock.stamp), :target=>'_blank' %></td>
+    <td><%= link_to "#{stock.code}#{riselabel(stock.weekrise)}", stockurl(stock.code,stock.stamp), :target=>'_blank' %></td>
 
   </tr>
 <% end %>
