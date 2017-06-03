@@ -74,19 +74,32 @@ class Monthline < ActiveRecord::Base
     end
   end
 
-  def self.rise_trend?(code,cnt)
+  # 查看过去两年的走势
+  def self.rise_trend(code,cnt)
     deals = Monthline.where("code=\"#{code}\"").order("day desc").limit(cnt+1)
     if deals.size < cnt+1
       return false
     end
 
-    flg = true
+    arr_up = []
+    arr_down = []
     deals[0...cnt].each_index do |idx|
-      flg &&= deals[idx].close > deals[idx].open
-      flg &&= deals[idx].close > deals[idx+1].close
-      break unless flg
+      if deals[idx].close > deals[idx].open
+        arr_up << (deals[idx].open+deals[idx].close) * deals[idx].vol
+      else
+        arr_down << (deals[idx].open+deals[idx].close) * deals[idx].vol
+      end
     end
 
-    flg
+    rise_rate = 0
+    if (arr_up.size > arr_down.size)
+      if arr_down.sum > 0
+        rise_rate = arr_up.sum / arr_down.sum
+      else
+        rise_rate = arr_up.size
+      end
+    end
+
+    rise_rate
   end
 end

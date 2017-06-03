@@ -2,7 +2,7 @@ class StocksController < ApplicationController
   # GET /stocks
   # GET /stocks.json
   def index
-    @stocks = Stock.where("weekrise>0")#.where(monthrise:1)
+    @stocks = Stock.where("weekrise>0").where("monthrise>0").order("monthrise desc,weekrise desc")
 
     respond_to do |format|
       format.html # index.html.erb

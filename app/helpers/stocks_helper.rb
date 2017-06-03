@@ -7,14 +7,14 @@ module StocksHelper
     end
   end
 
-  def riselabel(weekrise)
-    case weekrise
+  def riselabel(stock)
+    case stock.weekrise
       when 1
-        "(连续上涨)"
+        "(连续上涨)#{stock.monthrise}"
       when 2
-        "(超跌反弹)"
+        "(超跌反弹)#{stock.monthrise}"
       when 3
-        "(反弹上涨)"
+        "(反弹上涨)#{stock.monthrise}"
       else
         ""
     end
