@@ -8,7 +8,9 @@ class FinReport < ActiveRecord::Base
 
   def self.import_finRpt
     stocks = Stock.all
+    codes = FinReport.select("distinct fd_code").all.map(&:fd_code)
     stocks.each do |s|
+      next if codes.include?(s.code)
       records = []
       if s.stamp == "us"
         records = import_us_finRpt s
@@ -92,7 +94,7 @@ class FinReport < ActiveRecord::Base
     items = parsed_json["data"]["data"]
 
     records = items.map do |item|
-      {fd_code:stock.code, fd_year:item["fd_year"], fd_repdate:itm["fd_repdate"], fd_type:item["fd_type"],
+      {fd_code:stock.code, fd_year:item["fd_year"], fd_repdate:item["fd_repdate"], fd_type:item["fd_type"],
        fd_turnover:item["fd_turnover"],fd_profit_base_share:item["fd_profit_base_share"],fd_profit_after_share:item["fd_profit_after_share"]}
     end
 
