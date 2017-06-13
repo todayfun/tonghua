@@ -11,7 +11,23 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20170529181927) do
+ActiveRecord::Schema.define(:version => 20170613144411) do
+
+  create_table "fin_reports", :force => true do |t|
+    t.string   "fd_code"
+    t.integer  "fd_year"
+    t.datetime "fd_repdate"
+    t.integer  "fd_type"
+    t.float    "fd_turnover"
+    t.float    "fd_profit_after_tax"
+    t.float    "fd_profit_base_share"
+    t.float    "fd_profit_after_share"
+    t.datetime "created_at",            :null => false
+    t.datetime "updated_at",            :null => false
+  end
+
+  add_index "fin_reports", ["fd_code", "fd_year", "fd_type"], :name => "index_fin_reports_on_fd_code_and_fd_year_and_fd_type", :unique => true
+  add_index "fin_reports", ["fd_code"], :name => "index_fin_reports_on_fd_code"
 
   create_table "gupiao_deals", :force => true do |t|
     t.string   "name"

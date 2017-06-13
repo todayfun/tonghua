@@ -1,0 +1,37 @@
+<h1>Listing fin_reports</h1>
+
+<table>
+  <tr>
+    <th>Fd code</th>
+    <th>Fd year</th>
+    <th>Fd repdate</th>
+    <th>Fd type</th>
+    <th>Fd turnover</th>
+    <th>Fd profit after tax</th>
+    <th>Fd profit base share</th>
+    <th>Fd profit after share</th>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @fin_reports.each do |fin_report| %>
+  <tr>
+    <td><%= fin_report.fd_code %></td>
+    <td><%= fin_report.fd_year %></td>
+    <td><%= fin_report.fd_repdate %></td>
+    <td><%= fin_report.fd_type %></td>
+    <td><%= fin_report.fd_turnover %></td>
+    <td><%= fin_report.fd_profit_after_tax %></td>
+    <td><%= fin_report.fd_profit_base_share %></td>
+    <td><%= fin_report.fd_profit_after_share %></td>
+    <td><%= link_to 'Show', fin_report %></td>
+    <td><%= link_to 'Edit', edit_fin_report_path(fin_report) %></td>
+    <td><%= link_to 'Destroy', fin_report, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New Fin report', new_fin_report_path %>

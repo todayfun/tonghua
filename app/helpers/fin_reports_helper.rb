@@ -1,0 +1,2 @@
+module FinReportsHelper
+end

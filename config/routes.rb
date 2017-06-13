@@ -1,4 +1,7 @@
 Tonghua::Application.routes.draw do
+  resources :fin_reports
+
+
   resources :monthlines
 
 

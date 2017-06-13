@@ -1,0 +1,49 @@
+<%= form_for(@fin_report) do |f| %>
+  <% if @fin_report.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@fin_report.errors.count, "error") %> prohibited this fin_report from being saved:</h2>
+
+      <ul>
+      <% @fin_report.errors.full_messages.each do |msg| %>
+        <li><%= msg %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= f.label :fd_code %><br />
+    <%= f.text_field :fd_code %>
+  </div>
+  <div class="field">
+    <%= f.label :fd_year %><br />
+    <%= f.number_field :fd_year %>
+  </div>
+  <div class="field">
+    <%= f.label :fd_repdate %><br />
+    <%= f.datetime_select :fd_repdate %>
+  </div>
+  <div class="field">
+    <%= f.label :fd_type %><br />
+    <%= f.number_field :fd_type %>
+  </div>
+  <div class="field">
+    <%= f.label :fd_turnover %><br />
+    <%= f.text_field :fd_turnover %>
+  </div>
+  <div class="field">
+    <%= f.label :fd_profit_after_tax %><br />
+    <%= f.text_field :fd_profit_after_tax %>
+  </div>
+  <div class="field">
+    <%= f.label :fd_profit_base_share %><br />
+    <%= f.text_field :fd_profit_base_share %>
+  </div>
+  <div class="field">
+    <%= f.label :fd_profit_after_share %><br />
+    <%= f.text_field :fd_profit_after_share %>
+  </div>
+  <div class="actions">
+    <%= f.submit %>
+  </div>
+<% end %>

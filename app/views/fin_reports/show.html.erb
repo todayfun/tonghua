@@ -1,0 +1,45 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Fd code:</b>
+  <%= @fin_report.fd_code %>
+</p>
+
+<p>
+  <b>Fd year:</b>
+  <%= @fin_report.fd_year %>
+</p>
+
+<p>
+  <b>Fd repdate:</b>
+  <%= @fin_report.fd_repdate %>
+</p>
+
+<p>
+  <b>Fd type:</b>
+  <%= @fin_report.fd_type %>
+</p>
+
+<p>
+  <b>Fd turnover:</b>
+  <%= @fin_report.fd_turnover %>
+</p>
+
+<p>
+  <b>Fd profit after tax:</b>
+  <%= @fin_report.fd_profit_after_tax %>
+</p>
+
+<p>
+  <b>Fd profit base share:</b>
+  <%= @fin_report.fd_profit_base_share %>
+</p>
+
+<p>
+  <b>Fd profit after share:</b>
+  <%= @fin_report.fd_profit_after_share %>
+</p>
+
+
+<%= link_to 'Edit', edit_fin_report_path(@fin_report) %> |
+<%= link_to 'Back', fin_reports_path %>
