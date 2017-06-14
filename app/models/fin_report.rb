@@ -5,12 +5,12 @@ class FinReport < ActiveRecord::Base
   TYPE_Q2 = 3
   TYPE_Q3 = 2
   TYPE_ANNUAL = 1
+  TYPE_SUM_Q2 = 6
+  TYPE_SUM_Q3 = 9
 
   def self.import_finRpt
     stocks = Stock.all
-    codes = FinReport.select("distinct fd_code").all.map(&:fd_code)
     stocks.each do |s|
-      next if codes.include?(s.code)
       records = []
       if s.stamp == "us"
         records = import_us_finRpt s
@@ -18,11 +18,26 @@ class FinReport < ActiveRecord::Base
         records = import_hk_finRpt s
       end
 
+      next if records.blank?
+
+      exists = {}
+      FinReport.where(fd_code:s.code).all.each do |r|
+        uk = "#{r.fd_code},#{r.fd_year},#{r.fd_type}"
+        exists[uk] = r
+      end
+
       FinReport.transaction do
         records.each do |item|
+          next if item["fd_year"].to_i < 2010 || item["fd_type"].blank?
           begin
-          FinReport.create item
-          rescue
+            uk = "#{item["fd_code"]},#{item["fd_year"]},#{item["fd_type"]}"
+            if exists[uk]
+              exists[uk].update_attributes item
+            else
+              FinReport.create item
+            end
+          rescue => err
+            puts err
           end
         end
       end
@@ -59,13 +74,22 @@ class FinReport < ActiveRecord::Base
         next
       end
 
-      fd_repdate, fd_year = cell.split("<br>")
-      if fd_year.end_with? "年报"
-        fd_year = fd_year.match(/(\d+)/)[1]
+      fd_repdate, fd_year_msg = cell.split("<br>")
+      if fd_year_msg.end_with? "一季报"
+        fd_type = FinReport::TYPE_Q1
+      elsif fd_year_msg.end_with? "中报"
+        fd_type = FinReport::TYPE_SUM_Q2
+      elsif fd_year_msg.end_with? "三季报(累计)"
+        fd_type = FinReport::TYPE_SUM_Q3
+      elsif fd_year_msg.end_with? "年报"
         fd_type = FinReport::TYPE_ANNUAL
-        cols << idx
-        records << {fd_code:stock.code, fd_year:fd_year, fd_repdate:fd_repdate, fd_type:fd_type}
+      else
+        next
       end
+
+      fd_year = fd_year_msg.match(/(\d+)/)[1]
+      cols << idx
+      records << {fd_code:stock.code, fd_year:fd_year, fd_repdate:fd_repdate, fd_type:fd_type}
     end
 
     # fd_turnover
@@ -93,8 +117,9 @@ class FinReport < ActiveRecord::Base
     parsed_json = ActiveSupport::JSON.decode(json_str)
     items = parsed_json["data"]["data"]
 
-    records = items.map do |item|
-      {fd_code:stock.code, fd_year:item["fd_year"], fd_repdate:item["fd_repdate"], fd_type:item["fd_type"],
+    records = []
+    items.each do |item|
+      records << {fd_code:stock.code, fd_year:item["fd_year"], fd_repdate:item["fd_repdate"], fd_type:item["fd_type"],
        fd_turnover:item["fd_turnover"],fd_profit_base_share:item["fd_profit_base_share"],fd_profit_after_share:item["fd_profit_after_share"]}
     end
 
