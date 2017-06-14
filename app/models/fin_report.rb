@@ -28,9 +28,11 @@ class FinReport < ActiveRecord::Base
 
       FinReport.transaction do
         records.each do |item|
-          next if item["fd_year"].to_i < 2010 || item["fd_type"].blank?
+           if item[:fd_year].to_i < 2010 || item[:fd_type].blank?
+             next
+           end
           begin
-            uk = "#{item["fd_code"]},#{item["fd_year"]},#{item["fd_type"]}"
+            uk = "#{item[:fd_code]},#{item[:fd_year]},#{item[:fd_type]}"
             if exists[uk]
               exists[uk].update_attributes item
             else
