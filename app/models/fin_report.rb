@@ -29,6 +29,7 @@ class FinReport < ActiveRecord::Base
       FinReport.transaction do
         records.each do |item|
            if item[:fd_year].to_i < 2010 || item[:fd_type].blank?
+             puts item
              next
            end
           begin
@@ -96,9 +97,9 @@ class FinReport < ActiveRecord::Base
 
     # fd_turnover
     cols.each_with_index do |col,idx|
-      records[idx]["fd_turnover"] = report[1][col]
-      records[idx]["fd_profit_base_share"] = report[-2][col]
-      records[idx]["fd_profit_after_share"] = report[-1][col]
+      records[idx][:fd_turnover] = report[1][col]
+      records[idx][:fd_profit_base_share] = report[-2][col]
+      records[idx][:fd_profit_after_share] = report[-1][col]
     end
 
     records
@@ -113,7 +114,8 @@ class FinReport < ActiveRecord::Base
   2，Q3
 =end
   def self.import_hk_finRpt stock
-    url = "http://web.ifzq.gtimg.cn/appstock/hk/HkInfo/getFinReport?type=3&reporttime_type=1&code=#{stock.code}&&startyear=2010&endyear=#{Time.now.year}"
+    code = stock.code.match(/(\d+)/)[1]
+    url = "http://web.ifzq.gtimg.cn/appstock/hk/HkInfo/getFinReport?type=3&reporttime_type=1&code=#{code}&&startyear=2010&endyear=#{Time.now.year}"
     rsp = Net::HTTP.get(URI.parse(url))
     json_str = rsp
     parsed_json = ActiveSupport::JSON.decode(json_str)
