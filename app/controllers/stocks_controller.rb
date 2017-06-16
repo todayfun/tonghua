@@ -15,6 +15,8 @@ class StocksController < ApplicationController
   def show
     @stock = Stock.find(params[:id])
 
+    @fin_reports = FinReport.where(fd_code:@stock.code).order("fd_repdate desc")
+
     respond_to do |format|
       format.html # show.html.erb
       format.json { render json: @stock }

@@ -33,7 +33,7 @@ class FinReport < ActiveRecord::Base
       FinReport.transaction do
         records.each do |item|
            if item[:fd_year].to_i < 2010 || item[:fd_type].blank?
-             puts "ignore fd_year<2010: "+item
+             puts "ignore fd_year<2010: " + item.inspect
              next
            end
           begin
@@ -92,7 +92,7 @@ class FinReport < ActiveRecord::Base
 
     debt_json_str = match_data[1]
     debt_json = ActiveSupport::JSON.decode(debt_json_str)
-    debt_report = benefit_json["report"]
+    debt_report = debt_json["report"]
 
 
     records = []

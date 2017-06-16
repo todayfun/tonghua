@@ -9,7 +9,7 @@
 <% @stocks.each do |stock| %>
   <tr>
     <td><%= link_to "#{stock.code}#{riselabel(stock)}", stockurl(stock.code,stock.stamp), :target=>'_blank' %></td>
-
+    <td><%= link_to "Show FinReport", stock%></td>
   </tr>
 <% end %>
 </table>

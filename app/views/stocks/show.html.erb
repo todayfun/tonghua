@@ -1,15 +1,37 @@
 <p id="notice"><%= notice %></p>
 
 <p>
-  <b>Code:</b>
-  <%= @stock.code %>
+<table>
+  <tr>
+    <th>财报日期</th>
+    <th>财报类型</th>
+    <th>remark</th>
+    <th>每股基本收益</th>
+    <th>现金及等价物</th>
+    <th>remark</th>
+    <th>长期负债</th>
+    <th>股东权益</th>
+    <th>remark</th>
+    <th>流动负债</th>
+    <th>流动资产</th>
+  </tr>
+
+  <% @fin_reports.each do |fin_report| %>
+      <tr>
+        <td><%= fin_report.fd_repdate.to_date %></td>
+        <td><%= fin_report_label fin_report.fd_type %></td>
+        <td></td>
+        <td><%= fin_report.fd_profit_base_share %></td>
+        <td><%= fin_report.fd_cash_and_deposit %></td>
+        <td></td>
+        <td><%= fin_report.fd_non_liquid_debts %></td>
+        <td><%= fin_report.fd_stkholder_rights %></td>
+        <td></td>
+        <td><%= fin_report.fd_liquid_debts %></td>
+        <td><%= fin_report.fd_liquid_assets %></td>
+      </tr>
+  <% end %>
+</table>
 </p>
 
-<p>
-  <b>Stamp:</b>
-  <%= @stock.stamp %>
-</p>
-
-
-<%= link_to 'Edit', edit_stock_path(@stock) %> |
 <%= link_to 'Back', stocks_path %>
