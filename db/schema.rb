@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20170613144411) do
+ActiveRecord::Schema.define(:version => 20170616133048) do
 
   create_table "fin_reports", :force => true do |t|
     t.string   "fd_code"
@@ -22,8 +22,14 @@ ActiveRecord::Schema.define(:version => 20170613144411) do
     t.float    "fd_profit_after_tax"
     t.float    "fd_profit_base_share"
     t.float    "fd_profit_after_share"
-    t.datetime "created_at",            :null => false
-    t.datetime "updated_at",            :null => false
+    t.datetime "created_at",             :null => false
+    t.datetime "updated_at",             :null => false
+    t.float    "fd_dividend_base_share"
+    t.float    "fd_non_liquid_debts"
+    t.float    "fd_stkholder_rights"
+    t.float    "fd_liquid_debts"
+    t.float    "fd_liquid_assets"
+    t.float    "fd_cash_and_deposit"
   end
 
   add_index "fin_reports", ["fd_code", "fd_year", "fd_type"], :name => "index_fin_reports_on_fd_code_and_fd_year_and_fd_type", :unique => true
