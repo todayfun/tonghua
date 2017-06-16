@@ -23,6 +23,7 @@ class Weekline < ActiveRecord::Base
     puts "new import: #{new_imported}, total imported: #{total_imported}, total stock: #{total_stotck}"
   end
 
+  # http://web.ifzq.gtimg.cn/appstock/app/hkfqkline/get?_var=kline_weekqfq&param=hk00700,week,,,320,qfq
   def self.import_weekline(code,stamp)
     url = nil
     case stamp
