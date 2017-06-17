@@ -23,7 +23,7 @@ class StocksController < ApplicationController
 
     @fin_reports = FinReport.where(fd_code:@stock.code).order("fd_repdate desc").all
 
-    fy_matrix = {fd_year:[],fd_price:[],fd_profit_base_share:[],fd_cash_base_share:[],fd_debt_rate:[]}
+    fy_matrix = {fd_year:[],fd_price:[],fd_profit_base_share:[],fd_cash_base_share:[],fd_debt_rate:[],fd_virtual_profit_base_share:[]}
 
     dest_currency = @stock.stamp=='us' ? FinReport::CURRENCY_USD : FinReport::CURRENCY_HKD
     currency = nil
@@ -40,12 +40,16 @@ class StocksController < ApplicationController
 
     q_matrix = {fd_repdate:[],fd_price:[],fd_profit_base_share:[],fd_cash_base_share:[],fd_debt_rate:[]}
     cnt = 0
+    profit_matrix = {idx:[],data:{}}
     @fin_reports.each do |r|
       q_matrix[:fd_repdate] << "#{r.fd_repdate.to_date}<br/>#{fin_report_label r.fd_type}"
       q_matrix[:fd_price] << Monthline.where("code='#{@stock.code}' and day <= '#{r.fd_repdate.to_date}'").order("day desc").first.try(:close)
       q_matrix[:fd_profit_base_share] << r.fd_profit_base_share
       q_matrix[:fd_cash_base_share] << cash_base_share(@stock.stamp,@stock.gb,r.fd_cash_and_deposit)
       q_matrix[:fd_debt_rate] << stkholder_rights_of_debt(r.fd_non_liquid_debts,r.fd_stkholder_rights)
+
+      profit_matrix[:data]["#{r.fd_year},#{r.fd_type}"] = r.fd_profit_base_share
+      profit_matrix[:idx] << [r.fd_year,r.fd_type]
 
       cnt += 1
       break if cnt > 12
@@ -62,9 +66,17 @@ class StocksController < ApplicationController
         f.yAxis(min:0) if fy_matrix[:fd_profit_base_share].compact.min > 0
         f.legend(layout:"vertical",align:"right",verticalAlign:"middle")
 
-        f.series(name:"股价(#{dest_currency})",data:fy_matrix[:fd_price].reverse)
-        f.series(name:"每股收益(#{dest_currency})",data:currency_translate(fy_matrix[:fd_profit_base_share].reverse, currency, dest_currency))
+        arr_profit_base_share = currency_translate(fy_matrix[:fd_profit_base_share].reverse, currency, dest_currency)
+        arr_price = fy_matrix[:fd_price].reverse
+
+        arr_virtual_profit_base_share = nil
+        pe0 = arr_price.compact.sum / arr_profit_base_share.compact.sum
+        arr_virtual_profit_base_share = arr_profit_base_share.map {|v| v.nil? ? nil : (v * pe0).round(2)}
+
+        f.series(name:"股价(#{dest_currency})",data:arr_price)
+        f.series(name:"每股收益(#{dest_currency})",data:arr_profit_base_share)
         f.series(name:"每股现金(#{dest_currency})",data:currency_translate(fy_matrix[:fd_cash_base_share].reverse,currency,dest_currency))
+        f.series(name:"PE虚线",data:arr_virtual_profit_base_share) if arr_virtual_profit_base_share
       end
     end
 
@@ -73,16 +85,36 @@ class StocksController < ApplicationController
       @q_chart = nil
       @q_rights_rate = nil
     else
+      logger.info profit_matrix.inspect
+      abs_profit_of_quarter = []
+      profit_matrix[:idx][0..-1].each_with_index do |e,idx|
+        uk = "#{e[0]},#{e[1]}"
+        v = if e[1]==FinReport::TYPE_Q1
+          profit_matrix[:data][uk]
+        else
+          next_e = profit_matrix[:idx][idx+1]
+          next_uk = "#{next_e[0]},#{next_e[1]}"
+          if profit_matrix[:data][uk] && profit_matrix[:data][next_uk]
+            profit_matrix[:data][uk] - profit_matrix[:data][next_uk]
+          else
+            nil
+          end
+        end
+
+        abs_profit_of_quarter << v
+      end
+
       @q_chart = LazyHighCharts::HighChart.new('graph') do |f|
         f.title(text: "季报-关键指标")
         f.chart(width:"900",height:"450")
         f.xAxis(categories: q_arr)
-        f.yAxis(min:0) if q_matrix[:fd_profit_base_share].compact.min > 0
+        f.yAxis(min:0) if abs_profit_of_quarter.compact.min > 0
         f.legend(layout:"vertical",align:"right",verticalAlign:"middle")
 
         f.series(name:"股价(#{dest_currency})",data:q_matrix[:fd_price].reverse)
-        f.series(name:"每股收益(#{dest_currency})",data:currency_translate(q_matrix[:fd_profit_base_share].reverse,currency,dest_currency))
+        f.series(name:"每股收益累计(#{dest_currency})",data:currency_translate(q_matrix[:fd_profit_base_share].reverse,currency,dest_currency))
         f.series(name:"每股现金(#{dest_currency})",data:currency_translate(q_matrix[:fd_cash_base_share].reverse,currency,dest_currency))
+        f.series(name:"每股收益单季(#{dest_currency})",data:currency_translate(abs_profit_of_quarter.reverse,currency,dest_currency))
       end
 
       @q_rights_rate = LazyHighCharts::HighChart.new('graph') do |f|
