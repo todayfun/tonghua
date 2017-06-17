@@ -1,7 +1,10 @@
 <%= javascript_include_tag "application" %>
 <p id="notice"><%= notice %></p>
-
 <p>
+  <%= link_to 'Back', stocks_path %>
+  <%= high_chart("fy_chart", @fy_chart) if @fy_chart%>
+  <%= high_chart("quarter_chart", @q_chart) if @q_chart%>
+
 <table>
   <tr>
     <th>财报日期</th>
@@ -36,7 +39,5 @@
   <% end %>
 </table>
 </p>
-
-<%= high_chart("chart_id", @fy_chart) if @fy_chart%>
 
 <%= link_to 'Back', stocks_path %>
