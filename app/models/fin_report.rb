@@ -33,39 +33,43 @@ class FinReport < ActiveRecord::Base
 
   def self.import_finRpt
     stocks = Stock.all
-    stocks.each do |s|
-      records = []
-      if s.stamp == "us"
-        records = import_us_finRpt s
-      else
-        #records = import_hk_finRpt s
-        records = import_hk_finRpt_from_tonghuashun s
-      end
+    stocks.each do |stock|
+      import_finRpt_one stock
+    end
+  end
 
-      next if records.blank?
+  def self.import_finRpt_one(stock)
+    records = []
+    if stock.stamp == "us"
+      records = import_us_finRpt stock
+    else
+      #records = import_hk_finRpt s
+      records = import_hk_finRpt_from_tonghuashun stock
+    end
 
-      exists = {}
-      FinReport.where(fd_code:s.code).all.each do |r|
-        uk = "#{r.fd_code},#{r.fd_year},#{r.fd_type}"
-        exists[uk] = r
-      end
+    return if records.blank?
 
-      FinReport.transaction do
-        records.each do |item|
-           if item[:fd_year].to_i < 2010 || item[:fd_type].blank?
-             #puts "ignore fd_year<2010: " + item.inspect
-             next
-           end
-          begin
-            uk = "#{item[:fd_code]},#{item[:fd_year]},#{item[:fd_type]}"
-            if exists[uk]
-              exists[uk].update_attributes item
-            else
-              FinReport.create item
-            end
-          rescue => err
-            puts err
+    exists = {}
+    FinReport.where(fd_code:stock.code).all.each do |r|
+      uk = "#{r.fd_code},#{r.fd_year},#{r.fd_type}"
+      exists[uk] = r
+    end
+
+    FinReport.transaction do
+      records.each do |item|
+        if item[:fd_year].to_i < 2010 || item[:fd_type].blank?
+          #puts "ignore fd_year<2010: " + item.inspect
+          next
+        end
+        begin
+          uk = "#{item[:fd_code]},#{item[:fd_year]},#{item[:fd_type]}"
+          if exists[uk]
+            exists[uk].update_attributes item
+          else
+            FinReport.create item
           end
+        rescue => err
+          puts err
         end
       end
     end

@@ -32,7 +32,7 @@ class StocksController < ApplicationController
 
       currency = r.currency
       fy_matrix[:fd_year] << r.fd_year
-      fy_matrix[:fd_price] << Monthline.where("code='#{@stock.code}' and day <= '#{r.fd_repdate.to_date}'").last.try(:close)
+      fy_matrix[:fd_price] << Monthline.where("code='#{@stock.code}' and day <= '#{r.fd_repdate.to_date}'").order("day desc").first.try(:close)
       fy_matrix[:fd_profit_base_share] << r.fd_profit_base_share
       fy_matrix[:fd_cash_base_share] << cash_base_share(@stock.stamp,@stock.gb,r.fd_cash_and_deposit)
       fy_matrix[:fd_debt_rate] << stkholder_rights_of_debt(r.fd_non_liquid_debts,r.fd_stkholder_rights)
@@ -42,7 +42,7 @@ class StocksController < ApplicationController
     cnt = 0
     @fin_reports.each do |r|
       q_matrix[:fd_repdate] << "#{r.fd_repdate.to_date}-#{fin_report_label r.fd_type}"
-      q_matrix[:fd_price] << Monthline.where("code='#{@stock.code}' and day <= '#{r.fd_repdate.to_date}'").last.try(:close)
+      q_matrix[:fd_price] << Monthline.where("code='#{@stock.code}' and day <= '#{r.fd_repdate.to_date}'").order("day desc").first.try(:close)
       q_matrix[:fd_profit_base_share] << r.fd_profit_base_share
       q_matrix[:fd_cash_base_share] << cash_base_share(@stock.stamp,@stock.gb,r.fd_cash_and_deposit)
       q_matrix[:fd_debt_rate] << stkholder_rights_of_debt(r.fd_non_liquid_debts,r.fd_stkholder_rights)

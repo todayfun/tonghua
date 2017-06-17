@@ -6,28 +6,36 @@ class Stock < ActiveRecord::Base
   def self.import_summary
     stocks = Stock.all
     stocks.each do |stock|
-      url = "http://web.ifzq.gtimg.cn/portable/mobile/qt/data?code=#{stock.code}"
-      rsp = Net::HTTP.get(URI.parse(url))
-      json = ActiveSupport::JSON.decode(rsp)
-      data = json["data"]
-
-      pri = data["newpri"].to_f
-      next if pri<0.001
-
-      sz = data["sz"].to_f*100000000
-      gb = (sz / data["newpri"].to_f).to_i
-      stock.update_attributes gb:gb,sz:sz,low52w:data["52wl"],high52w:data["52wh"],price:data["newpri"],pe:data["pe"]
+      import_summary_one stock
     end
+  end
+
+  def self.import_summary_one(stock)
+    url = "http://web.ifzq.gtimg.cn/portable/mobile/qt/data?code=#{stock.code}"
+    rsp = Net::HTTP.get(URI.parse(url))
+    json = ActiveSupport::JSON.decode(rsp)
+    data = json["data"]
+
+    pri = data["newpri"].to_f
+    return if pri<0.001
+
+    sz = data["sz"].to_f*100000000
+    gb = (sz / data["newpri"].to_f).to_i
+    stock.update_attributes gb:gb,sz:sz,low52w:data["52wl"],high52w:data["52wh"],price:data["newpri"],pe:data["pe"]
   end
 
   def self.rise_trend(weekcnt=4,monthcnt=24)
     stocks = Stock.all
 
     stocks.each do |s|
-      monthrise = Monthline.rise_trend s.code, monthcnt
-      weekrise = Weekline.rise_trend s.code, weekcnt
-      s.update_attributes monthrise:monthrise, weekrise:weekrise
+      rise_trend_one s,weekcnt,monthcnt
     end
+  end
+
+  def self.rise_trend_one(stock,weekcnt,monthcnt)
+    monthrise = Monthline.rise_trend stock.code, monthcnt
+    weekrise = Weekline.rise_trend stock.code, weekcnt
+    stock.update_attributes monthrise:monthrise, weekrise:weekrise
   end
 
   def self.import
@@ -90,5 +98,21 @@ class Stock < ActiveRecord::Base
     hk_stocks.each do |code|
       Stock.create code:code, stamp:"hk"
     end
+  end
+
+  def self.refresh_one code
+    stock = Stock.find_by_code code
+
+    if stock.nil?
+      stock = Stock.create code:code, stamp:(code.match(/^hk/i) ? "hk" : "us")
+    end
+
+    import_summary_one stock
+    Weekline.import_weekline stock.code,stock.stamp
+    Monthline.import_monthline stock.code,stock.stamp
+    rise_trend_one stock,4,24
+    FinReport.import_finRpt_one stock
+
+    true
   end
 end
