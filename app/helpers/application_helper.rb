@@ -17,4 +17,17 @@ module ApplicationHelper
         "invalid"
     end
   end
+
+  def cash_base_share(stock_type, gb, cash)
+    (gb>1 ? (cash * (stock_type=="us" ? FinReport::US_UNIT : FinReport::HK_UNIT) / gb).round(2) : 0)
+  end
+
+  def stkholder_rights_of_debt(fd_non_liquid_debts,fd_stkholder_rights)
+    total = fd_non_liquid_debts + fd_stkholder_rights
+    if total < 0.001
+      0
+    else
+      (fd_stkholder_rights / total).round(4)
+    end
+  end
 end

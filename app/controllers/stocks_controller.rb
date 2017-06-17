@@ -1,4 +1,6 @@
 class StocksController < ApplicationController
+  include ApplicationHelper
+
   # GET /stocks
   # GET /stocks.json
   def index
@@ -16,6 +18,33 @@ class StocksController < ApplicationController
     @stock = Stock.find(params[:id])
 
     @fin_reports = FinReport.where(fd_code:@stock.code).order("fd_repdate desc")
+
+    fy_matrix = {fd_year:[],fd_profit_base_share:[],fd_cash_base_share:[],fd_debt_rate:[]}
+
+    @fin_reports.each do |r|
+      next if r.fd_type != FinReport::TYPE_ANNUAL
+
+      fy_matrix[:fd_year] << r.fd_year
+      fy_matrix[:fd_profit_base_share] << r.fd_profit_base_share
+      fy_matrix[:fd_cash_base_share] << cash_base_share(@stock.stamp,@stock.gb,r.fd_cash_and_deposit)
+      fy_matrix[:fd_debt_rate] << stkholder_rights_of_debt(r.fd_non_liquid_debts,r.fd_stkholder_rights)
+    end
+
+    fd_years = fy_matrix[:fd_year].reverse
+    if fd_years.blank?
+      @fy_chart = nil
+    else
+      @fy_chart = LazyHighCharts::HighChart.new('graph') do |f|
+        f.title(text: "年报-关键指标")
+        f.xAxis(categories: fd_years)
+        f.yAxis(title:{text:"每股收益(元)"})
+        f.legend(layout:"vertical",align:"right",verticalAlign:"middle")
+
+        f.series(name:"每股收益(元)",data:fy_matrix[:fd_profit_base_share].reverse)
+        f.series(name:"每股现金(元)",data:fy_matrix[:fd_cash_base_share].reverse)
+        f.series(name:"股东权益占比",data:fy_matrix[:fd_debt_rate].reverse)
+      end
+    end
 
     respond_to do |format|
       format.html # show.html.erb
