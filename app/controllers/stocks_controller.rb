@@ -45,7 +45,7 @@ class StocksController < ApplicationController
       q_matrix[:fd_debt_rate] << stkholder_rights_of_debt(r.fd_non_liquid_debts,r.fd_stkholder_rights)
 
       cnt += 1
-      break if cnt > 4
+      break if cnt > 8
     end
 
     fd_years = fy_matrix[:fd_year].reverse
@@ -54,28 +54,41 @@ class StocksController < ApplicationController
     else
       @fy_chart = LazyHighCharts::HighChart.new('graph') do |f|
         f.title(text: "年报-关键指标")
+        f.chart(width:"800",height:"300")
         f.xAxis(categories: fd_years)
+        f.yAxis(min:0) if fy_matrix[:fd_profit_base_share].compact.min > 0
         f.legend(layout:"vertical",align:"right",verticalAlign:"middle")
 
         f.series(name:"股价(元)",data:fy_matrix[:fd_price].reverse)
         f.series(name:"每股收益(元)",data:fy_matrix[:fd_profit_base_share].reverse)
         f.series(name:"每股现金(元)",data:fy_matrix[:fd_cash_base_share].reverse)
-        f.series(name:"股东权益占比",data:fy_matrix[:fd_debt_rate].reverse)
       end
     end
 
     q_arr = q_matrix[:fd_repdate].reverse
     if q_arr.blank?
       @q_chart = nil
+      @q_rights_rate = nil
     else
       @q_chart = LazyHighCharts::HighChart.new('graph') do |f|
         f.title(text: "季报-关键指标")
+        f.chart(width:"800",height:"300")
         f.xAxis(categories: q_arr)
+        f.yAxis(min:0) if q_matrix[:fd_profit_base_share].compact.min > 0
         f.legend(layout:"vertical",align:"right",verticalAlign:"middle")
 
         f.series(name:"股价(元)",data:q_matrix[:fd_price].reverse)
         f.series(name:"每股收益(元)",data:q_matrix[:fd_profit_base_share].reverse)
         f.series(name:"每股现金(元)",data:q_matrix[:fd_cash_base_share].reverse)
+      end
+
+      @q_rights_rate = LazyHighCharts::HighChart.new('graph') do |f|
+        f.title(text: "季报-股东权益/长期债务占比")
+        f.chart(width:"800",height:"300")
+        f.xAxis(categories: q_arr)
+        f.yAxis(min:0)
+        f.legend(layout:"vertical",align:"right",verticalAlign:"middle")
+
         f.series(name:"股东权益占比",data:q_matrix[:fd_debt_rate].reverse)
       end
     end
