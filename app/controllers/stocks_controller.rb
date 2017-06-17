@@ -25,9 +25,12 @@ class StocksController < ApplicationController
 
     fy_matrix = {fd_year:[],fd_price:[],fd_profit_base_share:[],fd_cash_base_share:[],fd_debt_rate:[]}
 
+    dest_currency = @stock.stamp=='us' ? FinReport::CURRENCY_USD : FinReport::CURRENCY_HKD
+    currency = nil
     @fin_reports.each do |r|
       next if r.fd_type != FinReport::TYPE_ANNUAL
 
+      currency = r.currency
       fy_matrix[:fd_year] << r.fd_year
       fy_matrix[:fd_price] << Monthline.where("code='#{@stock.code}' and day <= '#{r.fd_repdate.to_date}'").last.try(:close)
       fy_matrix[:fd_profit_base_share] << r.fd_profit_base_share
@@ -54,14 +57,14 @@ class StocksController < ApplicationController
     else
       @fy_chart = LazyHighCharts::HighChart.new('graph') do |f|
         f.title(text: "年报-关键指标")
-        f.chart(width:"800",height:"300")
+        f.chart(width:"800",height:"450")
         f.xAxis(categories: fd_years)
         f.yAxis(min:0) if fy_matrix[:fd_profit_base_share].compact.min > 0
         f.legend(layout:"vertical",align:"right",verticalAlign:"middle")
 
-        f.series(name:"股价(元)",data:fy_matrix[:fd_price].reverse)
-        f.series(name:"每股收益(元)",data:fy_matrix[:fd_profit_base_share].reverse)
-        f.series(name:"每股现金(元)",data:fy_matrix[:fd_cash_base_share].reverse)
+        f.series(name:"股价(#{dest_currency})",data:fy_matrix[:fd_price].reverse)
+        f.series(name:"每股收益(#{dest_currency})",data:currency_translate(fy_matrix[:fd_profit_base_share].reverse, currency, dest_currency))
+        f.series(name:"每股现金(#{dest_currency})",data:currency_translate(fy_matrix[:fd_cash_base_share].reverse,currency,dest_currency))
       end
     end
 
@@ -72,19 +75,19 @@ class StocksController < ApplicationController
     else
       @q_chart = LazyHighCharts::HighChart.new('graph') do |f|
         f.title(text: "季报-关键指标")
-        f.chart(width:"800",height:"300")
+        f.chart(width:"800",height:"450")
         f.xAxis(categories: q_arr)
         f.yAxis(min:0) if q_matrix[:fd_profit_base_share].compact.min > 0
         f.legend(layout:"vertical",align:"right",verticalAlign:"middle")
 
-        f.series(name:"股价(元)",data:q_matrix[:fd_price].reverse)
-        f.series(name:"每股收益(元)",data:q_matrix[:fd_profit_base_share].reverse)
-        f.series(name:"每股现金(元)",data:q_matrix[:fd_cash_base_share].reverse)
+        f.series(name:"股价(#{dest_currency})",data:q_matrix[:fd_price].reverse)
+        f.series(name:"每股收益(#{dest_currency})",data:currency_translate(q_matrix[:fd_profit_base_share].reverse,currency,dest_currency))
+        f.series(name:"每股现金(#{dest_currency})",data:currency_translate(q_matrix[:fd_cash_base_share].reverse,currency,dest_currency))
       end
 
       @q_rights_rate = LazyHighCharts::HighChart.new('graph') do |f|
         f.title(text: "季报-股东权益/长期债务占比")
-        f.chart(width:"800",height:"300")
+        f.chart(width:"800",height:"250")
         f.xAxis(categories: q_arr)
         f.yAxis(min:0)
         f.legend(layout:"vertical",align:"right",verticalAlign:"middle")

@@ -20,7 +20,7 @@ module ApplicationHelper
 
   def cash_base_share(stock_type, gb, cash)
     return 0 if cash.nil? or gb.nil?
-    (gb>1 ? (cash *  FinReport::US_UNIT / gb).round(2) : 0)
+    (gb>1 ? (cash *  FinReport::FIN_RPT_UNIT / gb).round(2) : 0)
   end
 
   def stkholder_rights_of_debt(fd_non_liquid_debts,fd_stkholder_rights)
@@ -42,6 +42,18 @@ module ApplicationHelper
     else
       code = stock.code.sub /hk0/i, "HK"
       "http://stockpage.10jqka.com.cn/#{code}/finance/"
+    end
+  end
+
+  def currency_translate(arr,src_currency,dest_currency)
+    if src_currency == dest_currency
+      arr
+    elsif src_currency == FinReport::CURRENCY_CNY && dest_currency == FinReport::CURRENCY_USD
+      arr.map {|e| e.nil? ? e : e * FinReport::CNY2USD_RATE}
+    elsif src_currency == FinReport::CURRENCY_CNY && dest_currency == FinReport::CURRENCY_HKD
+      arr.map {|e| e.nil? ? e : e * FinReport::CNY2HKD_RATE}
+    else
+      logger.error "invalid currency translate: from #{src_currency} to #{dest_currency}"
     end
   end
 end

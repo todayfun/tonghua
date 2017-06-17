@@ -1,9 +1,19 @@
 class FinReport < ActiveRecord::Base
-  attr_accessible :fd_code, :fd_profit_after_share, :fd_profit_after_tax, :fd_profit_base_share, :fd_repdate,
-                  :fd_turnover, :fd_type, :fd_year,
-                  :fd_dividend_base_share, :fd_non_liquid_debts, :fd_stkholder_rights,
-                  :fd_liquid_debts, :fd_liquid_assets, :fd_cash_and_deposit
-
+  attr_accessible :fd_code,
+                  :fd_profit_after_share, # 基本每股收益
+                  :fd_profit_base_share, # 稀释每股收益
+                  :fd_profit_after_tax, # 税后盈利
+                  :fd_repdate, # 财报日期
+                  :fd_turnover, # 营业额
+                  :fd_type, # 财报类型
+                  :fd_year, # 财年
+                  :fd_dividend_base_share,# 股息
+                  :fd_non_liquid_debts, # 长期负债
+                  :fd_stkholder_rights, # 股东权益
+                  :fd_liquid_debts, # 流动负债，短期负债
+                  :fd_liquid_assets, # 流动资产
+                  :fd_cash_and_deposit, # 现金与现金等价物
+                  :currency # 财报中的货币
 
   TYPE_Q1 = 4
   TYPE_Q2 = 3
@@ -12,8 +22,14 @@ class FinReport < ActiveRecord::Base
   TYPE_SUM_Q2 = 6
   TYPE_SUM_Q3 = 9
 
-  HK_UNIT=1000000 # 百万
-  US_UNIT=10000   # 万
+  FIN_RPT_UNIT=10000   # 万，同花顺的财报以 万元为单位
+
+  CURRENCY_CNY = "CNY" # 人民币
+  CURRENCY_HKD = "HKD" # 港元
+  CURRENCY_USD = "USD" # 美元
+
+  CNY2USD_RATE = 0.1468
+  CNY2HKD_RATE = 1.1454
 
   def self.import_finRpt
     stocks = Stock.all
@@ -104,6 +120,14 @@ class FinReport < ActiveRecord::Base
     cols = []
     # fd_year, fd_type
     # "2016-06-30<br>2016\u5e74\u4e2d\u62a5"
+    currency = CURRENCY_USD
+    keyindex_json["title"][1..-1].each do |arr|
+      if arr[1] == "元"
+        currency = CURRENCY_CNY
+        break
+      end
+    end
+
     keyindex_report[0].each_with_index  do |cell,idx|
       unless cell.to_s.match(/^20[012][0-9]/)
         next
@@ -124,7 +148,7 @@ class FinReport < ActiveRecord::Base
 
       fd_year = fd_year_msg.match(/(\d+)/)[1]
       cols << idx
-      records << {fd_code:stock.code, fd_year:fd_year, fd_repdate:fd_repdate, fd_type:fd_type}
+      records << {fd_code:stock.code, fd_year:fd_year, fd_repdate:fd_repdate, fd_type:fd_type, currency:currency}
     end
 
     # 计算行
@@ -132,7 +156,7 @@ class FinReport < ActiveRecord::Base
     keyindex_row_label = {fd_profit_base_share:"基本每股收益"}
 
     debt_row_title = debt_json["title"][1..-1].map{|arr| arr[0].strip}
-    debt_row_label = {fd_cash_and_deposit:["其中：现金与现金等价物","现金和现金等价物"],fd_stkholder_rights:"股东权益合计",fd_non_liquid_debts:["非流动负债合计","长期债务"],fd_liquid_debts:"流动负债合计",fd_liquid_assets:"流动资产合计"}
+    debt_row_label = {fd_cash_and_deposit:["其中：现金与现金等价物","现金和现金等价物","现金和中央银行存款"],fd_stkholder_rights:"股东权益合计",fd_non_liquid_debts:["非流动负债合计","长期债务"],fd_liquid_debts:["流动负债合计","短期借款"],fd_liquid_assets:"流动资产合计"}
 
     keyindex_row_idx = {}
     keyindex_row_label.each do |k,v|
@@ -224,6 +248,14 @@ class FinReport < ActiveRecord::Base
     cols = []
     # fd_year, fd_type
     # 计算财年
+    currency = CURRENCY_HKD
+    keyindex_json["title"][1..-1].each do |arr|
+      if arr[1] == "元"
+        currency = CURRENCY_CNY
+        break
+      end
+    end
+
     keyindex_report[0].each_with_index  do |cell,idx|
       unless cell.to_s.match(/^20[1-9][0-9]/)
         next
@@ -246,7 +278,7 @@ class FinReport < ActiveRecord::Base
 
       fd_year = fd_repdate.year
       cols << idx
-      records << {fd_code:stock.code, fd_year:fd_year, fd_repdate:fd_repdate, fd_type:fd_type}
+      records << {fd_code:stock.code, fd_year:fd_year, fd_repdate:fd_repdate, fd_type:fd_type, currency:currency}
     end
 
     # 计算行
