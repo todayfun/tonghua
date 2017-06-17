@@ -2,8 +2,12 @@
 <p id="notice"><%= notice %></p>
 <p>
   <%= link_to 'Back', stocks_path %>
+  <br>
+  <%= link_to "同花顺图表", link_to_tonghuashun_finance(@stock), :target=>'_blank'%>
   <%= high_chart("fy_chart", @fy_chart) if @fy_chart%>
+  <%= high_chart("fy_uprate_chart", @fy_uprate_chart) if @fy_uprate_chart%>
   <%= high_chart("quarter_chart", @q_chart) if @q_chart%>
+  <%= high_chart("q_uprate_chart", @q_uprate_chart) if @q_uprate_chart%>
   <%= high_chart("q_rights_rate", @q_rights_rate) if @q_rights_rate%>
 
 <table>
