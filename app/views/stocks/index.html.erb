@@ -20,7 +20,8 @@
     <td><%= stock.pe %></td>
     <td><%= stock.high52w %></td>
     <td><%= stock.low52w %></td>
-    <td><%= link_to "Show FinReport", stock%></td>
+    <td><%= link_to "本地图表", stock%></td>
+    <td><%= link_to "同花顺图表", link_to_tonghuashun_finance(stock), :target=>'_blank'%></td>
   </tr>
 <% end %>
 </table>

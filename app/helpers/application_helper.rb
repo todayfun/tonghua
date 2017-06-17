@@ -30,4 +30,17 @@ module ApplicationHelper
       (fd_stkholder_rights / total).round(4)
     end
   end
+
+  # http://stockpage.10jqka.com.cn/WB/finance/
+  # http://stockpage.10jqka.com.cn/HK0700/finance/
+  def link_to_tonghuashun_finance(stock)
+    if stock.stamp == 'us'
+      regexp = /([A-Z]+)/
+      code = stock.code.match(regexp)[1]
+      "http://stockpage.10jqka.com.cn/#{code}/finance/"
+    else
+      code = stock.code.sub /hk0/i, "HK"
+      "http://stockpage.10jqka.com.cn/#{code}/finance/"
+    end
+  end
 end
