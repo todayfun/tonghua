@@ -15,25 +15,31 @@ class StocksController < ApplicationController
   # GET /stocks/1
   # GET /stocks/1.json
   def show
-    @stock = Stock.find(params[:id])
+    if params[:id] == "0"
+      @stock = Stock.find_by_code(params[:code])
+    else
+      @stock = Stock.find(params[:id])
+    end
 
     @fin_reports = FinReport.where(fd_code:@stock.code).order("fd_repdate desc").all
 
-    fy_matrix = {fd_year:[],fd_profit_base_share:[],fd_cash_base_share:[],fd_debt_rate:[]}
+    fy_matrix = {fd_year:[],fd_price:[],fd_profit_base_share:[],fd_cash_base_share:[],fd_debt_rate:[]}
 
     @fin_reports.each do |r|
       next if r.fd_type != FinReport::TYPE_ANNUAL
 
       fy_matrix[:fd_year] << r.fd_year
+      fy_matrix[:fd_price] << Monthline.where("code='#{@stock.code}' and day <= '#{r.fd_repdate.to_date}'").last.try(:close)
       fy_matrix[:fd_profit_base_share] << r.fd_profit_base_share
       fy_matrix[:fd_cash_base_share] << cash_base_share(@stock.stamp,@stock.gb,r.fd_cash_and_deposit)
       fy_matrix[:fd_debt_rate] << stkholder_rights_of_debt(r.fd_non_liquid_debts,r.fd_stkholder_rights)
     end
 
-    q_matrix = {fd_repdate:[],fd_profit_base_share:[],fd_cash_base_share:[],fd_debt_rate:[]}
+    q_matrix = {fd_repdate:[],fd_price:[],fd_profit_base_share:[],fd_cash_base_share:[],fd_debt_rate:[]}
     cnt = 0
     @fin_reports.each do |r|
       q_matrix[:fd_repdate] << "#{r.fd_repdate.to_date}-#{fin_report_label r.fd_type}"
+      q_matrix[:fd_price] << Monthline.where("code='#{@stock.code}' and day <= '#{r.fd_repdate.to_date}'").last.try(:close)
       q_matrix[:fd_profit_base_share] << r.fd_profit_base_share
       q_matrix[:fd_cash_base_share] << cash_base_share(@stock.stamp,@stock.gb,r.fd_cash_and_deposit)
       q_matrix[:fd_debt_rate] << stkholder_rights_of_debt(r.fd_non_liquid_debts,r.fd_stkholder_rights)
@@ -51,6 +57,7 @@ class StocksController < ApplicationController
         f.xAxis(categories: fd_years)
         f.legend(layout:"vertical",align:"right",verticalAlign:"middle")
 
+        f.series(name:"股价(元)",data:fy_matrix[:fd_price].reverse)
         f.series(name:"每股收益(元)",data:fy_matrix[:fd_profit_base_share].reverse)
         f.series(name:"每股现金(元)",data:fy_matrix[:fd_cash_base_share].reverse)
         f.series(name:"股东权益占比",data:fy_matrix[:fd_debt_rate].reverse)
@@ -66,6 +73,7 @@ class StocksController < ApplicationController
         f.xAxis(categories: q_arr)
         f.legend(layout:"vertical",align:"right",verticalAlign:"middle")
 
+        f.series(name:"股价(元)",data:q_matrix[:fd_price].reverse)
         f.series(name:"每股收益(元)",data:q_matrix[:fd_profit_base_share].reverse)
         f.series(name:"每股现金(元)",data:q_matrix[:fd_cash_base_share].reverse)
         f.series(name:"股东权益占比",data:q_matrix[:fd_debt_rate].reverse)

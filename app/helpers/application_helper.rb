@@ -19,7 +19,8 @@ module ApplicationHelper
   end
 
   def cash_base_share(stock_type, gb, cash)
-    (gb>1 ? (cash * (stock_type=="us" ? FinReport::US_UNIT : FinReport::HK_UNIT) / gb).round(2) : 0)
+    return 0 if cash.nil? or gb.nil?
+    (gb>1 ? (cash *  FinReport::US_UNIT / gb).round(2) : 0)
   end
 
   def stkholder_rights_of_debt(fd_non_liquid_debts,fd_stkholder_rights)

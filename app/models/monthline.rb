@@ -50,7 +50,7 @@ class Monthline < ActiveRecord::Base
     end
 
     lastoneyear_deals = []
-    oneyearago_day = 1.year.ago.strftime('%Y-%m-%d')
+    oneyearago_day = "2009-12-31"
     raw_deals.each do |r|
       if r[0] < oneyearago_day
         break
