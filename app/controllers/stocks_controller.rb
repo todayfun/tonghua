@@ -41,14 +41,14 @@ class StocksController < ApplicationController
     q_matrix = {fd_repdate:[],fd_price:[],fd_profit_base_share:[],fd_cash_base_share:[],fd_debt_rate:[]}
     cnt = 0
     @fin_reports.each do |r|
-      q_matrix[:fd_repdate] << "#{r.fd_repdate.to_date}-#{fin_report_label r.fd_type}"
+      q_matrix[:fd_repdate] << "#{r.fd_repdate.to_date}<br/>#{fin_report_label r.fd_type}"
       q_matrix[:fd_price] << Monthline.where("code='#{@stock.code}' and day <= '#{r.fd_repdate.to_date}'").order("day desc").first.try(:close)
       q_matrix[:fd_profit_base_share] << r.fd_profit_base_share
       q_matrix[:fd_cash_base_share] << cash_base_share(@stock.stamp,@stock.gb,r.fd_cash_and_deposit)
       q_matrix[:fd_debt_rate] << stkholder_rights_of_debt(r.fd_non_liquid_debts,r.fd_stkholder_rights)
 
       cnt += 1
-      break if cnt > 8
+      break if cnt > 12
     end
 
     fd_years = fy_matrix[:fd_year].reverse
@@ -57,7 +57,7 @@ class StocksController < ApplicationController
     else
       @fy_chart = LazyHighCharts::HighChart.new('graph') do |f|
         f.title(text: "年报-关键指标")
-        f.chart(width:"800",height:"450")
+        f.chart(width:"900",height:"450")
         f.xAxis(categories: fd_years)
         f.yAxis(min:0) if fy_matrix[:fd_profit_base_share].compact.min > 0
         f.legend(layout:"vertical",align:"right",verticalAlign:"middle")
@@ -75,7 +75,7 @@ class StocksController < ApplicationController
     else
       @q_chart = LazyHighCharts::HighChart.new('graph') do |f|
         f.title(text: "季报-关键指标")
-        f.chart(width:"800",height:"450")
+        f.chart(width:"900",height:"450")
         f.xAxis(categories: q_arr)
         f.yAxis(min:0) if q_matrix[:fd_profit_base_share].compact.min > 0
         f.legend(layout:"vertical",align:"right",verticalAlign:"middle")
@@ -87,7 +87,7 @@ class StocksController < ApplicationController
 
       @q_rights_rate = LazyHighCharts::HighChart.new('graph') do |f|
         f.title(text: "季报-股东权益/长期债务占比")
-        f.chart(width:"800",height:"250")
+        f.chart(width:"900",height:"250")
         f.xAxis(categories: q_arr)
         f.yAxis(min:0)
         f.legend(layout:"vertical",align:"right",verticalAlign:"middle")
