@@ -16,6 +16,7 @@ class Stock < ActiveRecord::Base
     json = ActiveSupport::JSON.decode(rsp)
     data = json["data"]
 
+    return if data.blank?
     pri = data["newpri"].to_f
     return if pri<0.001
 
@@ -97,6 +98,13 @@ class Stock < ActiveRecord::Base
 
     hk_stocks.each do |code|
       Stock.create code:code, stamp:"hk"
+    end
+  end
+
+  def self.refresh codes
+    puts codes.inspect
+    codes.each do |code|
+      refresh_one code
     end
   end
 
