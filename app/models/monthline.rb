@@ -16,7 +16,7 @@ class Monthline < ActiveRecord::Base
 
     total_imported = Monthline.count("distinct code")
     total_stotck = Stock.count("distinct code")
-    puts "new import: #{new_imported}, total imported: #{total_imported}, total stock: #{total_stotck}"
+    puts "new import monthline: #{new_imported}, total imported: #{total_imported}, total stock: #{total_stotck}"
   end
 
   def self.import_monthline(code,stamp)

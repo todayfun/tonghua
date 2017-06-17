@@ -20,7 +20,7 @@ class Weekline < ActiveRecord::Base
 
     total_imported = Weekline.count("distinct code")
     total_stotck = Stock.count("distinct code")
-    puts "new import: #{new_imported}, total imported: #{total_imported}, total stock: #{total_stotck}"
+    puts "new import weekline: #{new_imported}, total imported: #{total_imported}, total stock: #{total_stotck}"
   end
 
   # http://web.ifzq.gtimg.cn/appstock/app/hkfqkline/get?_var=kline_weekqfq&param=hk00700,week,,,320,qfq
@@ -54,7 +54,7 @@ class Weekline < ActiveRecord::Base
     end
 
     lastoneyear_deals = []
-    oneyearago_day = "2009-12-31"
+    oneyearago_day = 2.year.ago.strftime('%Y-%m-%d')
     raw_deals.each do |r|
       if r[0] < oneyearago_day
         break
