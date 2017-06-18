@@ -21,6 +21,10 @@ class StocksController < ApplicationController
       @stock = Stock.find(params[:id])
     end
 
+    if params[:refresh]
+      Stock.refresh_one @stock.code
+    end
+
     @fin_reports = FinReport.where(fd_code:@stock.code).order("fd_repdate desc").all
 
     dest_currency = @stock.stamp=='us' ? FinReport::CURRENCY_USD : FinReport::CURRENCY_HKD
@@ -118,7 +122,7 @@ class StocksController < ApplicationController
 
       prev_fy_uk = "#{prev_year},#{FinReport::TYPE_ANNUAL}"
       v = if q_profit_matrix[:data][uk] && q_profit_matrix[:data][prev_fy_uk] && q_profit_matrix[:data][prev_year_uk]
-            q_profit_matrix[:data][uk] + (q_profit_matrix[:data][prev_fy_uk] - q_profit_matrix[:data][prev_year_uk])
+            (q_profit_matrix[:data][uk] + (q_profit_matrix[:data][prev_fy_uk] - q_profit_matrix[:data][prev_year_uk])).round(2)
           else
             nil
           end

@@ -24,6 +24,10 @@ module ApplicationHelper
   end
 
   def stkholder_rights_of_debt(fd_non_liquid_debts,fd_stkholder_rights)
+    unless fd_non_liquid_debts && fd_stkholder_rights
+      return nil
+    end
+
     total = fd_non_liquid_debts + fd_stkholder_rights
     if total < 0.001
       0
@@ -71,6 +75,7 @@ module ApplicationHelper
       end
     else
       logger.error "invalid currency translate: from #{src_currency} to #{dest_currency}"
+      arr
     end
   end
 end
