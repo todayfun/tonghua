@@ -43,6 +43,7 @@ class Weekline < ActiveRecord::Base
       return
     end
 
+    puts "import weekline #{code}"
     rsp = Net::HTTP.get(URI.parse(url))
     parsed_json = ActiveSupport::JSON.decode(rsp)["data"]
     return if parsed_json.nil? || !parsed_json.is_a?(Hash)

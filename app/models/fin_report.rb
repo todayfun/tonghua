@@ -51,6 +51,8 @@ class FinReport < ActiveRecord::Base
 
     return if flg_updated>0
 
+    puts "import_finRpt_one #{stock.code}"
+
     if stock.stamp == "us"
       records = import_us_finRpt stock
     else

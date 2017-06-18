@@ -38,6 +38,7 @@ class Monthline < ActiveRecord::Base
       return
     end
 
+    puts "import monthline #{code}"
     rsp = Net::HTTP.get(URI.parse(url))
 
     parsed_json = ActiveSupport::JSON.decode(rsp)["data"]
