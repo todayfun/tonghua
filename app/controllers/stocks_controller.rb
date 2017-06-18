@@ -73,14 +73,14 @@ class StocksController < ApplicationController
       @fy_chart[:price] = highchart_line("年报-股价",fd_years,series)
 
       series = []
-      series << ["每股收益(#{dest_currency}",currency_translate(fy_matrix[:fd_profit_base_share].reverse, currency, dest_currency)]
-      series << ["每股现金(#{dest_currency})",currency_translate(fy_matrix[:fd_cash_base_share].reverse,currency,dest_currency)]
-      @fy_chart[:profit_base_share] = highchart_line("年报-每股收益",fd_years,series)
-
-      series = []
       series << ["收益增长率",rate_profit_of_year.reverse]
       series << ["P/E",pe_of_fy.reverse]
       @fy_chart[:rate_profit_of_year] = highchart_line("年报-收益增长率",fd_years,series)
+      
+      series = []
+      series << ["每股收益(#{dest_currency}",currency_translate(fy_matrix[:fd_profit_base_share].reverse, currency, dest_currency)]
+      series << ["每股现金(#{dest_currency})",currency_translate(fy_matrix[:fd_cash_base_share].reverse,currency,dest_currency)]
+      @fy_chart[:profit_base_share] = highchart_line("年报-每股收益",fd_years,series)
     end
 
     # 计算季报
@@ -108,7 +108,7 @@ class StocksController < ApplicationController
       uk = "#{e[0]},#{e[1]}"
       prev_year = e[0].to_i - 1
       prev_year_uk = "#{prev_year},#{e[1]}"
-      rate = if q_profit_matrix[:data][uk] && q_profit_matrix[:data][prev_year_uk]
+      rate = if q_profit_matrix[:data][uk] && q_profit_matrix[:data][prev_year_uk]  && q_profit_matrix[:data][prev_year_uk]>0
                ((q_profit_matrix[:data][uk] - q_profit_matrix[:data][prev_year_uk]) * 100/ q_profit_matrix[:data][prev_year_uk]).round(2)
              else
                nil
@@ -140,7 +140,6 @@ class StocksController < ApplicationController
     if !q_arr.blank?
       series = []
       series << ["股价(#{dest_currency})",q_matrix[:fd_price].reverse]
-      series << ["每股现金(#{dest_currency})",currency_translate(q_matrix[:fd_cash_base_share].reverse,currency,dest_currency)]
       @q_chart[:price_quarter] = highchart_line("季报-股价",q_arr,series)
 
       series = []
@@ -151,6 +150,7 @@ class StocksController < ApplicationController
       series = []
       series << ["每股收益累计(#{dest_currency})",currency_translate(q_matrix[:fd_profit_base_share].reverse,currency,dest_currency)]
       series << ["最近4季度收益(#{dest_currency})",currency_translate(sum_profit_of_lastyear.reverse,currency,dest_currency)]
+      series << ["每股现金(#{dest_currency})",currency_translate(q_matrix[:fd_cash_base_share].reverse,currency,dest_currency)]
       @q_chart[:profit_base_share] = highchart_line("季报-每股收益",q_arr,series)
 
       series = []

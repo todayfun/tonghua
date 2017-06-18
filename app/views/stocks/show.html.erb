@@ -1,7 +1,7 @@
 <%= javascript_include_tag "application" %>
 <p id="notice"><%= notice %></p>
 <p>
-  <%= @stock.code %>
+  <%= "#{@stock.code},#{@stock.name}" %>
   <%= link_to 'Back', stocks_path %>
   <%= link_to 'refresh', stock_path(@stock,refresh:true) %>
   <%= link_to 'without refresh', stock_path(@stock) %>
