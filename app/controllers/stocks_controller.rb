@@ -57,7 +57,7 @@ class StocksController < ApplicationController
     pe_of_fy = []
     fy_matrix[:fd_price].each_with_index do |p,idx|
       pe = if p && fy_matrix[:fd_profit_base_share][idx] && fy_matrix[:fd_profit_base_share][idx]>0
-             (p / currency_translate(fy_matrix[:fd_profit_base_share][idx],currency,dest_currency)).round(2)
+             ((p - fy_matrix[:fd_cash_base_share][idx].to_f)/ currency_translate(fy_matrix[:fd_profit_base_share][idx],currency,dest_currency)).round(2)
            else
              nil
            end
@@ -76,7 +76,7 @@ class StocksController < ApplicationController
       series << ["收益增长率",rate_profit_of_year.reverse]
       series << ["P/E",pe_of_fy.reverse]
       @fy_chart[:rate_profit_of_year] = highchart_line("年报-收益增长率",fd_years,series)
-      
+
       series = []
       series << ["每股收益(#{dest_currency}",currency_translate(fy_matrix[:fd_profit_base_share].reverse, currency, dest_currency)]
       series << ["每股现金(#{dest_currency})",currency_translate(fy_matrix[:fd_cash_base_share].reverse,currency,dest_currency)]
@@ -127,7 +127,7 @@ class StocksController < ApplicationController
     pe_of_lastyear = []
     q_matrix[:fd_price].each_with_index do |p,idx|
       pe = if p && sum_profit_of_lastyear[idx] && sum_profit_of_lastyear[idx]>0
-             (p / currency_translate(sum_profit_of_lastyear[idx],currency,dest_currency)).round(2)
+             ((p - q_matrix[:fd_cash_base_share][idx].to_f)/ currency_translate(sum_profit_of_lastyear[idx],currency,dest_currency)).round(2)
            else
              nil
            end
