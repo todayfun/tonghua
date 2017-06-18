@@ -30,6 +30,8 @@ class FinReport < ActiveRecord::Base
 
   CNY2USD_RATE = 0.1468
   CNY2HKD_RATE = 1.1454
+  HKD2USD_RATE = 0.1282
+  USD2HKD_RATE = 7.7999
 
   def self.import_finRpt
     stocks = Stock.all
@@ -128,6 +130,9 @@ class FinReport < ActiveRecord::Base
     keyindex_json["title"][1..-1].each do |arr|
       if arr[1] == "元"
         currency = CURRENCY_CNY
+        break
+      elsif arr[1] == "美元"
+        currency = CURRENCY_USD
         break
       end
     end
@@ -256,6 +261,9 @@ class FinReport < ActiveRecord::Base
     keyindex_json["title"][1..-1].each do |arr|
       if arr[1] == "元"
         currency = CURRENCY_CNY
+        break
+      elsif arr[1] == "港元"
+        currency = CURRENCY_HKD
         break
       end
     end

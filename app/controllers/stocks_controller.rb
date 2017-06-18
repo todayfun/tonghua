@@ -128,7 +128,7 @@ class StocksController < ApplicationController
     pe_of_lastyear = []
     q_matrix[:fd_price].each_with_index do |p,idx|
       pe = if p && sum_profit_of_lastyear[idx] && sum_profit_of_lastyear[idx]>0
-             (p / currency_translate(sum_profit_of_lastyear[idx],currency,dest_currency)).round(0)
+             (p / currency_translate(sum_profit_of_lastyear[idx],currency,dest_currency)).round(2)
            else
              nil
            end
@@ -143,7 +143,7 @@ class StocksController < ApplicationController
     else
       @q_uprate_chart = LazyHighCharts::HighChart.new('graph') do |f|
         f.title(text: "季报-收益增长率")
-        f.chart(width:"900",height:"200")
+        f.chart(width:"900",height:"400")
         f.xAxis(categories: q_arr)
         f.yAxis(title:{text:"最近4季度收益"})
         f.legend(layout:"vertical",align:"right",verticalAlign:"middle")

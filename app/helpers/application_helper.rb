@@ -50,17 +50,24 @@ module ApplicationHelper
       arr
     elsif src_currency == FinReport::CURRENCY_CNY && dest_currency == FinReport::CURRENCY_USD
       if arr.is_a? Array
-        arr.map {|e| e.nil? ? e : (e * FinReport::CNY2USD_RATE).round(2)}
+        arr.map {|e| e.nil? ? e : (e * FinReport::CNY2USD_RATE).round(3)}
       else
         e = arr
-        e.nil? ? e : (e * FinReport::CNY2USD_RATE).round(2)
+        e.nil? ? e : (e * FinReport::CNY2USD_RATE).round(3)
       end
     elsif src_currency == FinReport::CURRENCY_CNY && dest_currency == FinReport::CURRENCY_HKD
       if arr.is_a? Array
-        arr.map {|e| e.nil? ? e : (e * FinReport::CNY2HKD_RATE).round(2)}
+        arr.map {|e| e.nil? ? e : (e * FinReport::CNY2HKD_RATE).round(3)}
       else
         e = arr
-        e.nil? ? e : (e * FinReport::CNY2HKD_RATE).round(2)
+        e.nil? ? e : (e * FinReport::CNY2HKD_RATE).round(3)
+      end
+    elsif src_currency == FinReport::CURRENCY_USD && dest_currency == FinReport::CURRENCY_HKD
+      if arr.is_a? Array
+        arr.map {|e| e.nil? ? e : (e * FinReport::USD2HKD_RATE).round(3)}
+      else
+        e = arr
+        e.nil? ? e : (e * FinReport::USD2HKD_RATE).round(3)
       end
     else
       logger.error "invalid currency translate: from #{src_currency} to #{dest_currency}"
