@@ -36,6 +36,19 @@ module ApplicationHelper
     end
   end
 
+  def debt_rate_of_asset(fd_non_liquid_debts,fd_stkholder_rights)
+    unless fd_non_liquid_debts && fd_stkholder_rights
+      return nil
+    end
+
+    total = fd_non_liquid_debts + fd_stkholder_rights
+    if total < 0.001
+      0
+    else
+      (fd_stkholder_rights / total).round(4)
+    end
+  end
+
   # http://stockpage.10jqka.com.cn/WB/finance/
   # http://stockpage.10jqka.com.cn/HK0700/finance/
   def link_to_tonghuashun_finance(stock)
@@ -77,5 +90,21 @@ module ApplicationHelper
       logger.error "invalid currency translate: from #{src_currency} to #{dest_currency}"
       arr
     end
+  end
+
+  def highchart_line(title,categories,series,min=nil)
+    chart = LazyHighCharts::HighChart.new('graph') do |f|
+      f.title(text: title)
+      f.chart(width:"700",height:"200")
+      f.xAxis(categories: categories)
+      f.yAxis(min:min) if min
+      f.legend(layout:"vertical",align:"right",verticalAlign:"middle")
+
+      series.each do |name,data|
+        f.series name:name,data:data
+      end
+    end
+
+    chart
   end
 end

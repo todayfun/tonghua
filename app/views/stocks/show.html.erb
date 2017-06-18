@@ -6,11 +6,27 @@
   <%= link_to 'refresh', stock_path(@stock,refresh:true) %>
   <%= link_to 'without refresh', stock_path(@stock) %>
   <%= link_to "同花顺图表", link_to_tonghuashun_finance(@stock), :target=>'_blank'%>
-  <%= high_chart("fy_chart", @fy_chart) if @fy_chart%>
-  <%= high_chart("fy_uprate_chart", @fy_uprate_chart) if @fy_uprate_chart%>
-  <%= high_chart("quarter_chart", @q_chart) if @q_chart%>
-  <%= high_chart("q_uprate_chart", @q_uprate_chart) if @q_uprate_chart%>
-  <%= high_chart("q_rights_rate", @q_rights_rate) if @q_rights_rate%>
+
+  <table>
+    <tr>
+      <th>年报</th>
+      <th>季报</th>
+    </tr>
+    <tr>
+      <td>
+        <% @fy_chart.each do |name,chart| %>
+            <br>
+            <%= high_chart "fy_#{name}", chart %>
+        <% end %>
+      </td>
+      <td>
+        <% @q_chart.each do |name,chart| %>
+            <br>
+            <%= high_chart "q_#{name}", chart %>
+        <% end %>
+      </td>
+    </tr>
+  </table>
 
 <table>
   <tr>

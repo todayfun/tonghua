@@ -12,7 +12,7 @@ class Monthline < ActiveRecord::Base
       unless imported_codes.include? stock.code
         begin
           next if ignored_codes.include?(stock.code)
-          
+
           status = import_monthline stock.code, stock.stamp
 
           Runlog.update_log stock.code,Runlog::NAME_MONTHLINE,status
