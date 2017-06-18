@@ -35,9 +35,13 @@ class FinReport < ActiveRecord::Base
 
   def self.import_finRpt
     stocks = Stock.all
+    ignored_codes = Runlog.ignored Runlog::NAME_FINRPT,[Runlog::STATUS_DISABLE,Runlog::STATUS_DISABLE],1.week.ago
     stocks.each do |stock|
       begin
-      import_finRpt_one stock
+        next if ignored_codes.include?(stock.code)
+
+        status = import_finRpt_one stock
+        Runlog.update_log stock.code,Runlog::NAME_FINRPT, status
       rescue => err
         puts "import_finRpt exception for #{stock.code}: #{err}"
       end
@@ -49,9 +53,7 @@ class FinReport < ActiveRecord::Base
     oneweekago_day = 1.week.ago.beginning_of_week.strftime('%Y-%m-%d')
     flg_updated = FinReport.where("fd_code='#{stock.code}' and updated_at>'#{oneweekago_day}'").count("fd_code")
 
-    return if flg_updated>0
-
-    puts "import_finRpt_one #{stock.code}"
+    return Runlog::STATUS_IGNORE if flg_updated>0
 
     if stock.stamp == "us"
       records = import_us_finRpt stock
@@ -60,7 +62,9 @@ class FinReport < ActiveRecord::Base
       records = import_hk_finRpt_from_tonghuashun stock
     end
 
-    return if records.blank?
+    return Runlog::STATUS_DISABLE if records.blank?
+    puts "import_finRpt_one #{stock.code}"
+
 
     exists = {}
     FinReport.where(fd_code:stock.code).all.each do |r|
@@ -86,6 +90,8 @@ class FinReport < ActiveRecord::Base
         end
       end
     end
+
+    Runlog::STATUS_OK
   end
 
 =begin

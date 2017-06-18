@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20170618072353) do
+ActiveRecord::Schema.define(:version => 20170618103120) do
 
   create_table "fin_reports", :force => true do |t|
     t.string   "fd_code"
@@ -93,6 +93,17 @@ ActiveRecord::Schema.define(:version => 20170618072353) do
   add_index "monthlines", ["close"], :name => "index_monthlines_on_close"
   add_index "monthlines", ["code", "day"], :name => "index_monthlines_on_code_and_day", :unique => true
   add_index "monthlines", ["open"], :name => "index_monthlines_on_open"
+
+  create_table "runlogs", :force => true do |t|
+    t.string   "code"
+    t.string   "name"
+    t.string   "status"
+    t.datetime "run_at"
+  end
+
+  add_index "runlogs", ["code", "name"], :name => "index_runlogs_on_code_and_name"
+  add_index "runlogs", ["run_at"], :name => "index_runlogs_on_run_at"
+  add_index "runlogs", ["status"], :name => "index_runlogs_on_status"
 
   create_table "stocks", :force => true do |t|
     t.string   "code"
