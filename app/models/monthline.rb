@@ -6,11 +6,16 @@ class Monthline < ActiveRecord::Base
     imported_codes = Monthline.where("`day`>\"#{onemonthago_day}\"").select("distinct `code`").map &:code
 
     stocks = Stock.all
+    ignored_codes = Runlog.ignored Runlog::NAME_MONTHLINE,[Runlog::STATUS_DISABLE,Runlog::STATUS_DISABLE],1.month.ago
     new_imported = 0
     stocks.each do |stock|
       unless imported_codes.include? stock.code
         begin
-          import_monthline stock.code, stock.stamp
+          next if ignored_codes.include?(stock.code)
+          
+          status = import_monthline stock.code, stock.stamp
+
+          Runlog.update_log stock.code,Runlog::NAME_MONTHLINE,status
           new_imported += 1
         rescue => err
           puts "import_monthline exception for #{stock.code}: #{err}"
@@ -35,21 +40,21 @@ class Monthline < ActiveRecord::Base
     end
 
     if url.nil?
-      return
+      return Runlog::STATUS_DISABLE
     end
 
     puts "import monthline #{code}"
     rsp = Net::HTTP.get(URI.parse(url))
 
     parsed_json = ActiveSupport::JSON.decode(rsp)["data"]
-    return if parsed_json.nil? || !parsed_json.is_a?(Hash)
+    return Runlog::STATUS_DISABLE if parsed_json.nil? || !parsed_json.is_a?(Hash)
 
     parsed_json = parsed_json[code]
     raw_deals = parsed_json["qfqmonth"] || parsed_json["month"]
 
     if raw_deals.nil?
       puts "#{code} monthline nil"
-      return
+      return Runlog::STATUS_DISABLE
     end
 
     raw_deals = raw_deals.sort do |a,b|
@@ -66,7 +71,7 @@ class Monthline < ActiveRecord::Base
       end
     end
 
-    return if lastoneyear_deals.blank?
+    return Runlog::STATUS_IGNORE if lastoneyear_deals.blank?
 
     if lastoneyear_deals.first[0] > Time.now.beginning_of_month.strftime('%Y-%m-%d')
       lastoneyear_deals.shift
@@ -81,6 +86,8 @@ class Monthline < ActiveRecord::Base
         end
       end
     end
+
+    Runlog::STATUS_OK
   end
 
   # 查看过去两年的走势

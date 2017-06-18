@@ -12,6 +12,8 @@ class Runlog < ActiveRecord::Base
   STATUS_IGNORE = "IGNORE"
 
   def self.update_log(code,name,status)
+    status ||= STATUS_ERROR
+
     log = Runlog.where(code:code,name:name).first
     if log
       log.update_attributes status:status,run_at:Time.now

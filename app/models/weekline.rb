@@ -10,11 +10,17 @@ class Weekline < ActiveRecord::Base
     imported_codes = Weekline.where("`day`>\"#{oneweekago_day}\"").select("distinct `code`").map &:code
 
     stocks = Stock.all
+    ignored_codes = Runlog.ignored Runlog::NAME_MONTHLINE,[Runlog::STATUS_DISABLE,Runlog::STATUS_DISABLE],1.week.ago
+
     new_imported = 0
     stocks.each do |stock|
       unless imported_codes.include? stock.code
         begin
-          import_weekline stock.code,stock.stamp
+          next if ignored_codes.include?(stock.code)
+
+          status = import_weekline stock.code,stock.stamp
+
+          Runlog.update_log stock.code,Runlog::NAME_WEEKLINE,status
           new_imported += 1
         rescue => err
           puts "import_weekline exception for #{stock.code}: #{err}"
@@ -40,19 +46,19 @@ class Weekline < ActiveRecord::Base
     end
 
     if url.nil?
-      return
+      return Runlog::STATUS_DISABLE
     end
 
     puts "import weekline #{code}"
     rsp = Net::HTTP.get(URI.parse(url))
     parsed_json = ActiveSupport::JSON.decode(rsp)["data"]
-    return if parsed_json.nil? || !parsed_json.is_a?(Hash)
+    return Runlog::STATUS_DISABLE if parsed_json.nil? || !parsed_json.is_a?(Hash)
 
     parsed_json = parsed_json[code]
     raw_deals = parsed_json["qfqweek"] || parsed_json["week"]
     if raw_deals.nil?
       puts "#{code} weekline nil"
-      return
+      return Runlog::STATUS_DISABLE
     end
 
     raw_deals = raw_deals.sort do |a,b|
@@ -82,6 +88,8 @@ class Weekline < ActiveRecord::Base
         end
       end
     end
+
+    Runlog::STATUS_OK
   end
 
   def self.rise_trend(code,cnt)
