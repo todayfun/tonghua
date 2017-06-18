@@ -128,11 +128,11 @@ class Stock < ActiveRecord::Base
     stocks = Stock.select("id,code").all
     codes = FinReport.select("distinct fd_code").all.map &:fd_code
     cnt = 0
-    puts codes
     stocks.each do |s|
       if codes.include? s.code
 
       else
+        puts s.code
         s.delete
         cnt += 1
       end
