@@ -1,5 +1,5 @@
 class Stock < ActiveRecord::Base
-  attr_accessible :code, :stamp, :weekrise, :monthrise, :gb,:sz,:low52w, :high52w, :price,:pe
+  attr_accessible :code, :stamp, :weekrise, :monthrise, :gb,:sz,:low52w, :high52w, :price,:pe, :gpcode,:name
 
   # http://web.ifzq.gtimg.cn/portable/mobile/qt/data?code=hk00700
   # {"code":0,"msg":"ok","data":{"ssl":0,"sjl":0,"gb":0,"px":0,"avgm":0,"newpri":"272.60","yespri":"273.00","higpri":"276.40","lowpri":"272.60","volume":"20927343.0","dt":"2017\/06\/16 16:09:09","zd":"-0.40","zdf":"-0.15","sz":"25837.12","pe":"55.97","psy":"0.22","52wh":"283.40","52wl":"167.00"}}
@@ -140,5 +140,85 @@ class Stock < ActiveRecord::Base
 
     puts "clear_has_none_fin_report: #{cnt}"
     cnt
+  end
+
+=begin
+从雪球爬股票代码
+url = "https://xueqiu.com/S/list/search"
+rsp = Net::HTTP.post_form URI(url), page:100,size:5,exchange:"US",order:"desc",orderby:"percent"
+rsp.body:
+{"industries":[{},{}],"stocks":{"count":{"count":4142},"success":"true",
+"stocks":[{"symbol":"FOLD","code":"FOLD","name":"爱美医疗","current":"9.43","percent":"7.28","change":"0.64","high":"9.48","low":"8.59","high52w":"9.61","low52w":"4.41","marketcapital":"1.256238E9","amount":"4.350504197E7","type":"0","pettm":"","volume":"4713439","hasexist":"false"}
+=end
+
+  def self.import_stocks_from_xueqiu
+    stocks = Stock.all
+    stocks_hash = {}
+    stocks.each do |stock|
+      if stock.gpcode.nil?
+        if stock.stamp == "us"
+          stock.gpcode = stock.code.match(/[A-Z]/)[1]
+        else
+          stock.gpcode = stock.code
+        end
+
+        stock.save
+      end
+      stocks_hash["#{stock.gpcode},#{stock.stamp}"]=stock
+    end
+
+    import_stocks_from_xueqiu_by_stamp stocks_hash,"us"
+    import_stocks_from_xueqiu_by_stamp stocks_hash,"hk"
+
+  end
+
+  def self.import_stocks_from_xueqiu_by_stamp stocks_hash,stamp
+    page = 1
+    while true
+      url = "https://xueqiu.com/S/list/search"
+      rsp = Net::HTTP.post_form URI(url), page:page,size:100,exchange:stamp.upcase,order:"desc",orderby:"percent"
+      xueqiu_stocks = ActiveSupport::JSON.decode(rsp.body)["stocks"]["stocks"]
+
+      cnt = 0
+      xueqiu_stocks.each do |s|
+        if stocks_hash["#{s["code"]},#{stamp}"]
+          next
+        else
+          stock = save_stock_from_xueqiu s, stamp
+          stocks_hash["#{stock.gpcode},#{stamp}"]
+        end
+      end
+
+      puts "imported #{cnt} stocks from xueqiu"
+
+      break if xueqiu_stocks.blank?
+      page += 1
+    end
+  end
+
+  # :code, :stamp, :weekrise, :monthrise, :gb,:sz,:low52w, :high52w, :price,:pe, :gpcode,:name
+  def self.save_stock_from_xueqiu xuqiu_stock,stamp
+    if stamp=="us"
+      full_code = translate_tengxun_code xuqiu_stock["code"]
+    else
+      full_code = "#{stamp}#{xuqiu_stock["code"]}"
+    end
+
+    stock = Stock.create code:full_code,stamp:stamp,
+                         gb:xuqiu_stock["amount"],sz:xuqiu_stock["marketcapital"],
+                         low52w:xuqiu_stock["low52w"],high52w:xuqiu_stock["high52w"],
+                         price:xuqiu_stock["current"],pe:xuqiu_stock["pettm"],
+                         gpcode:xuqiu_stock["code"],name:xuqiu_stock["name"]
+
+    stock
+  end
+
+  # 换取美股在腾讯上的代码
+  def self.translate_tengxun_code gpcode
+    url = "http://gu.qq.com/#{gpcode}"
+    rsp = Net::HTTP.get(URI.parse(url))
+    full_code = rsp.split('/').last
+
+    full_code
   end
 end

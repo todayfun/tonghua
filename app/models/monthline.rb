@@ -59,6 +59,8 @@ class Monthline < ActiveRecord::Base
       end
     end
 
+    return if lastoneyear_deals.blank?
+    
     if lastoneyear_deals.first[0] > Time.now.beginning_of_month.strftime('%Y-%m-%d')
       lastoneyear_deals.shift
     end

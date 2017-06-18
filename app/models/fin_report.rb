@@ -98,7 +98,13 @@ class FinReport < ActiveRecord::Base
 =end
   def self.import_us_finRpt stock
     regexp = /([A-Z]+)/
-    code = stock.code.match(regexp)[1]
+    md = stock.code.match(regexp)
+    unless md
+      stock.delete
+      return
+    end
+
+    code = md[1]
     url = "http://stockpage.10jqka.com.cn/#{code}/finance/"
     rsp = Net::HTTP.get(URI.parse(url))
     regexp = /<p id="keyindex">(.*)<\/p>/

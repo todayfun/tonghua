@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20170617110332) do
+ActiveRecord::Schema.define(:version => 20170618072353) do
 
   create_table "fin_reports", :force => true do |t|
     t.string   "fd_code"
@@ -107,8 +107,11 @@ ActiveRecord::Schema.define(:version => 20170617110332) do
     t.float    "low52w"
     t.float    "price"
     t.float    "pe"
+    t.string   "name"
+    t.string   "gpcode"
   end
 
+  add_index "stocks", ["gpcode"], :name => "index_stocks_on_gpcode"
   add_index "stocks", ["monthrise"], :name => "index_stocks_on_monthrise"
   add_index "stocks", ["weekrise"], :name => "index_stocks_on_weekrise"
 

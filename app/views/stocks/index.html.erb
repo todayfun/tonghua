@@ -3,8 +3,6 @@
 <table>
   <tr>
     <th>Code</th>
-    <th>股本</th>
-    <th>市值</th>
     <th>股价</th>
     <th>PE</th>
     <th>52周最高</th>
@@ -14,8 +12,6 @@
 <% @stocks.each do |stock| %>
   <tr>
     <td><%= link_to "#{stock.code}#{riselabel(stock)}", stockurl(stock.code,stock.stamp), :target=>'_blank' %></td>
-    <td><%= number_with_delimiter stock.gb %></td>
-    <td><%= number_with_delimiter stock.sz %></td>
     <td><%= stock.price %></td>
     <td><%= stock.pe %></td>
     <td><%= stock.high52w %></td>
