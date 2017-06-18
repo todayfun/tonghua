@@ -9,8 +9,12 @@ class Monthline < ActiveRecord::Base
     new_imported = 0
     stocks.each do |stock|
       unless imported_codes.include? stock.code
-      import_monthline stock.code, stock.stamp
-      new_imported += 1
+        begin
+          import_monthline stock.code, stock.stamp
+          new_imported += 1
+        rescue => err
+          puts "import_monthline exception for #{stock.code}: #{err}"
+        end
       end
     end
 
@@ -23,9 +27,9 @@ class Monthline < ActiveRecord::Base
     url = nil
     case stamp
       when "us"
-        url="http://web.ifzq.gtimg.cn/appstock/app/usfqkline/get?_var=kline_monthqfq&param=#{code},month,,,320,qfq"
+        url="http://web.ifzq.gtimg.cn/appstock/app/usfqkline/get?param=#{code},month,,,320,qfq"
       when "hk"
-        url="http://web.ifzq.gtimg.cn/appstock/app/hkfqkline/get?_var=kline_monthqfq&param=#{code},month,,,320,qfq"
+        url="http://web.ifzq.gtimg.cn/appstock/app/hkfqkline/get?param=#{code},month,,,320,qfq"
       else
 
     end
@@ -35,9 +39,11 @@ class Monthline < ActiveRecord::Base
     end
 
     rsp = Net::HTTP.get(URI.parse(url))
-    json_str = rsp.split('=').last
 
-    parsed_json = ActiveSupport::JSON.decode(json_str)["data"][code]
+    parsed_json = ActiveSupport::JSON.decode(rsp)["data"]
+    return if parsed_json.nil? || !parsed_json.is_a?(Hash)
+
+    parsed_json = parsed_json[code]
     raw_deals = parsed_json["qfqmonth"] || parsed_json["month"]
 
     if raw_deals.nil?
@@ -60,7 +66,7 @@ class Monthline < ActiveRecord::Base
     end
 
     return if lastoneyear_deals.blank?
-    
+
     if lastoneyear_deals.first[0] > Time.now.beginning_of_month.strftime('%Y-%m-%d')
       lastoneyear_deals.shift
     end

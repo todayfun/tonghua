@@ -36,12 +36,21 @@ class FinReport < ActiveRecord::Base
   def self.import_finRpt
     stocks = Stock.all
     stocks.each do |stock|
+      begin
       import_finRpt_one stock
+      rescue => err
+        puts "import_finRpt exception for #{stock.code}: #{err}"
+      end
     end
   end
 
   def self.import_finRpt_one(stock)
     records = []
+    oneweekago_day = 1.week.ago.beginning_of_week.strftime('%Y-%m-%d')
+    flg_updated = FinReport.where("fd_code='#{stock.code}' and updated_at>'#{oneweekago_day}'").count("fd_code")
+
+    return if flg_updated>0
+
     if stock.stamp == "us"
       records = import_us_finRpt stock
     else
@@ -126,6 +135,8 @@ class FinReport < ActiveRecord::Base
     debt_json_str = match_data[1]
     debt_json = ActiveSupport::JSON.decode(debt_json_str)
     debt_report = debt_json["report"]
+
+    return if !debt_report.is_a?(Hash) || !keyindex_report.is_a?(Hash)
 
 
     records = []
@@ -258,6 +269,7 @@ class FinReport < ActiveRecord::Base
     debt_json = ActiveSupport::JSON.decode(debt_json_str)
     debt_report = debt_json["report"]
 
+    return if !debt_report.is_a?(Hash) || !keyindex_report.is_a?(Hash)
 
     records = []
     cols = []

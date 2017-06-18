@@ -13,8 +13,12 @@ class Weekline < ActiveRecord::Base
     new_imported = 0
     stocks.each do |stock|
       unless imported_codes.include? stock.code
-      import_weekline stock.code,stock.stamp
-        new_imported += 1
+        begin
+          import_weekline stock.code,stock.stamp
+          new_imported += 1
+        rescue => err
+          puts "import_weekline exception for #{stock.code}: #{err}"
+        end
       end
     end
 
@@ -28,9 +32,9 @@ class Weekline < ActiveRecord::Base
     url = nil
     case stamp
       when "us"
-        url="http://web.ifzq.gtimg.cn/appstock/app/usfqkline/get?_var=kline_weekqfq&param=#{code},week,,,320,qfq"
+        url="http://web.ifzq.gtimg.cn/appstock/app/usfqkline/get?param=#{code},week,,,320,qfq"
       when "hk"
-        url="http://web.ifzq.gtimg.cn/appstock/app/hkfqkline/get?_var=kline_weekqfq&param=#{code},week,,,320,qfq"
+        url="http://web.ifzq.gtimg.cn/appstock/app/hkfqkline/get?param=#{code},week,,,320,qfq"
       else
 
     end
@@ -40,9 +44,10 @@ class Weekline < ActiveRecord::Base
     end
 
     rsp = Net::HTTP.get(URI.parse(url))
-    json_str = rsp.split('=').last
+    parsed_json = ActiveSupport::JSON.decode(rsp)["data"]
+    return if parsed_json.nil? || !parsed_json.is_a?(Hash)
 
-    parsed_json = ActiveSupport::JSON.decode(json_str)["data"][code]
+    parsed_json = parsed_json[code]
     raw_deals = parsed_json["qfqweek"] || parsed_json["week"]
     if raw_deals.nil?
       puts "#{code} weekline nil"
