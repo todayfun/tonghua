@@ -5,5 +5,5 @@ require 'active_support/json'
 desc "Stock fin report quarterly"
 task :fin_report => :environment do
   FinReport.import_finRpt
-  Stock.import_summary
+  #Stock.import_summary
 end

@@ -16,7 +16,7 @@ class StocksController < ApplicationController
   # GET /stocks/1.json
   def show
     if params[:id] == "0"
-      @stock = Stock.find_by_code(params[:code])
+      @stock = Stock.where("code='#{params[:code]}' or gpcode='#{params[:code]}'").first
     else
       @stock = Stock.find(params[:id])
     end
@@ -84,7 +84,8 @@ class StocksController < ApplicationController
     end
 
     # 计算季报
-    q_matrix = {fd_repdate:[],fd_price:[],fd_profit_base_share:[],fd_cash_base_share:[],fd_debt_rate:[],fd_rights_rate:[]}
+    q_matrix = {fd_repdate:[],fd_price:[],fd_profit_base_share:[],fd_cash_base_share:[],fd_debt_rate:[],fd_rights_rate:[],
+    operating_cash:[],invest_cash:[],loan_cash:[]}
     cnt = 0
     q_profit_matrix = {idx:[],data:{}}
     @fin_reports.each do |r|
@@ -94,6 +95,9 @@ class StocksController < ApplicationController
       q_matrix[:fd_cash_base_share] << cash_base_share(@stock.stamp,@stock.gb,r.fd_cash_and_deposit)
       q_matrix[:fd_rights_rate] << stkholder_rights_of_debt(r.fd_non_liquid_debts,r.fd_stkholder_rights)
       q_matrix[:fd_debt_rate] << debt_rate_of_asset(r.fd_liquid_assets,r.fd_liquid_debts)
+      q_matrix[:operating_cash] << cash_base_share(@stock.stamp,@stock.gb,r.operating_cash)
+      q_matrix[:invest_cash] << cash_base_share(@stock.stamp,@stock.gb,r.invest_cash)
+      q_matrix[:loan_cash] << cash_base_share(@stock.stamp,@stock.gb,r.loan_cash)
 
       q_profit_matrix[:data]["#{r.fd_year},#{r.fd_type}"] = r.fd_profit_base_share
       q_profit_matrix[:idx] << [r.fd_year,r.fd_type]
@@ -150,8 +154,17 @@ class StocksController < ApplicationController
       series = []
       series << ["每股收益累计(#{dest_currency})",currency_translate(q_matrix[:fd_profit_base_share].reverse,currency,dest_currency)]
       series << ["最近4季度收益(#{dest_currency})",currency_translate(sum_profit_of_lastyear.reverse,currency,dest_currency)]
-      series << ["每股现金(#{dest_currency})",currency_translate(q_matrix[:fd_cash_base_share].reverse,currency,dest_currency)]
       @q_chart[:profit_base_share] = highchart_line("季报-每股收益",q_arr,series)
+
+      series = []
+      series << ["经营活动净额(#{dest_currency})",currency_translate(q_matrix[:operating_cash].reverse,currency,dest_currency)]
+      series << ["现金净额(#{dest_currency})",currency_translate(q_matrix[:fd_cash_base_share].reverse,currency,dest_currency)]
+      @q_chart[:cash_base_share] = highchart_line("季报-每股现金流",q_arr,series)
+
+      series = []
+      series << ["投资活动净额(#{dest_currency})",currency_translate(q_matrix[:invest_cash].reverse,currency,dest_currency)]
+      series << ["融资活动净额(#{dest_currency})",currency_translate(q_matrix[:loan_cash].reverse,currency,dest_currency)]
+      @q_chart[:cash_invest_base_share] = highchart_line("季报-每股投融资现金流",q_arr,series)
 
       series = []
       series << ["股东权益占比",q_matrix[:fd_rights_rate].reverse]

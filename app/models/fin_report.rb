@@ -13,7 +13,10 @@ class FinReport < ActiveRecord::Base
                   :fd_liquid_debts, # 流动负债，短期负债
                   :fd_liquid_assets, # 流动资产
                   :fd_cash_and_deposit, # 现金与现金等价物
-                  :currency # 财报中的货币
+                  :currency, # 财报中的货币
+                  :operating_cash, # 经营活动现金流量净额
+                  :invest_cash, # 投资活动现金流量净额
+                  :loan_cash # 筹资活动现金流量净额
 
   TYPE_Q1 = 4
   TYPE_Q2 = 3
@@ -50,11 +53,6 @@ class FinReport < ActiveRecord::Base
 
   def self.import_finRpt_one(stock)
     records = []
-    oneweekago_day = 1.week.ago.beginning_of_week.strftime('%Y-%m-%d')
-    flg_updated = FinReport.where("fd_code='#{stock.code}' and updated_at>'#{oneweekago_day}'").count("fd_code")
-
-    return Runlog::STATUS_IGNORE if flg_updated>0
-
     if stock.stamp == "us"
       records = import_us_finRpt stock
     else
@@ -64,7 +62,6 @@ class FinReport < ActiveRecord::Base
 
     return Runlog::STATUS_DISABLE if records.blank?
     puts "import_finRpt_one #{stock.code}"
-
 
     exists = {}
     FinReport.where(fd_code:stock.code).all.each do |r|
@@ -116,19 +113,14 @@ class FinReport < ActiveRecord::Base
   def self.import_us_finRpt stock
     regexp = /([A-Z]+)/
     md = stock.code.match(regexp)
-    unless md
-      stock.delete
-      return
-    end
+    return [] unless md
 
     code = md[1]
     url = "http://stockpage.10jqka.com.cn/#{code}/finance/"
     rsp = Net::HTTP.get(URI.parse(url))
     regexp = /<p id="keyindex">(.*)<\/p>/
     match_data = rsp.match(regexp)
-    unless match_data
-      return []
-    end
+    return [] unless match_data
 
     json_str = match_data[1]
     keyindex_json = ActiveSupport::JSON.decode(json_str)
@@ -136,16 +128,19 @@ class FinReport < ActiveRecord::Base
 
     regexp = /<p id="debt">(.*)<\/p>/
     match_data = rsp.match(regexp)
-    unless match_data
-      return []
-    end
+    return [] unless match_data
 
     debt_json_str = match_data[1]
     debt_json = ActiveSupport::JSON.decode(debt_json_str)
     debt_report = debt_json["report"]
+    
+    regexp = /<p id="cash">(.*)<\/p>/
+    match_data = rsp.match(regexp)
+    return [] unless match_data
 
-    return if !debt_report.is_a?(Hash) || !keyindex_report.is_a?(Hash)
-
+    cash_json_str = match_data[1]
+    cash_json = ActiveSupport::JSON.decode(cash_json_str)
+    cash_report = cash_json["report"]
 
     records = []
     cols = []
@@ -192,35 +187,12 @@ class FinReport < ActiveRecord::Base
     debt_row_title = debt_json["title"][1..-1].map{|arr| arr[0].strip}
     debt_row_label = {fd_cash_and_deposit:["其中：现金与现金等价物","现金和现金等价物","现金和中央银行存款"],fd_stkholder_rights:"股东权益合计",fd_non_liquid_debts:["非流动负债合计","长期债务"],fd_liquid_debts:["流动负债合计","短期借款"],fd_liquid_assets:"流动资产合计"}
 
-    keyindex_row_idx = {}
-    keyindex_row_label.each do |k,v|
-      idx = keyindex_row_title.index(v)
-      unless idx
-        puts "cant find #{v} from labels of #{stock.code}"
-        next
-      end
+    cash_row_title = cash_json["title"][1..-1].map{|arr| arr[0].strip}
+    cash_row_label = {operating_cash:["经营活动现金流量净额","经营活动产生的现金流量净额"],invest_cash:["投资活动现金流量净额","投资活动产生的现金流量净额"],loan_cash:["筹资活动现金流量净额","筹资活动产生的现金流量净额"]}
 
-      keyindex_row_idx[k] = idx + 1
-    end
-
-    debt_row_idx = {}
-    debt_row_label.each do |k,v|
-      idx = nil
-      if v.is_a? Array
-        v.each do |e|
-          idx = debt_row_title.index(e)
-          break if idx
-        end
-      else
-        idx = debt_row_title.index(v)
-      end
-      unless idx
-        puts "cant find #{v} from labels of #{stock.code}"
-        next
-      end
-
-      debt_row_idx[k] = idx + 1
-    end
+    keyindex_row_idx = calc_row_idx keyindex_row_label,keyindex_row_title,stock.code
+    debt_row_idx = calc_row_idx debt_row_label,debt_row_title,stock.code
+    cash_row_idx = calc_row_idx cash_row_label,cash_row_title,stock.code
 
     # 填充表格
     cols.each_with_index do |col,idx|
@@ -230,6 +202,10 @@ class FinReport < ActiveRecord::Base
 
       debt_row_idx.each do |field,row|
         records[idx][field] = debt_report[row][col]
+      end
+
+      cash_row_idx.each do |field,row|
+        records[idx][field] = cash_report[row][col]
       end
     end
 
@@ -259,9 +235,7 @@ class FinReport < ActiveRecord::Base
     rsp = Net::HTTP.get(URI.parse(url))
     regexp = /<p id="keyindex">(.*)<\/p>/
     match_data = rsp.match(regexp)
-    unless match_data
-      return []
-    end
+    return [] unless match_data
 
     json_str = match_data[1]
     keyindex_json = ActiveSupport::JSON.decode(json_str)
@@ -269,15 +243,19 @@ class FinReport < ActiveRecord::Base
 
     regexp = /<p id="debt">(.*)<\/p>/
     match_data = rsp.match(regexp)
-    unless match_data
-      return []
-    end
+    return [] unless match_data
 
     debt_json_str = match_data[1]
     debt_json = ActiveSupport::JSON.decode(debt_json_str)
     debt_report = debt_json["report"]
 
-    return if !debt_report.is_a?(Hash) || !keyindex_report.is_a?(Hash)
+    regexp = /<p id="cash">(.*)<\/p>/
+    match_data = rsp.match(regexp)
+    return [] unless match_data
+
+    cash_json_str = match_data[1]
+    cash_json = ActiveSupport::JSON.decode(cash_json_str)
+    cash_report = cash_json["report"]
 
     records = []
     cols = []
@@ -330,28 +308,12 @@ class FinReport < ActiveRecord::Base
     end
     debt_row_label = {fd_cash_and_deposit:"现金及现金等价物",fd_stkholder_rights:"权益合计",fd_non_liquid_debts:"非流动负债合计",fd_liquid_debts:"流动负债合计",fd_liquid_assets:"流动资产合计"}
 
+    cash_row_title = cash_json["title"][1..-1].map{|arr| arr[0].strip}
+    cash_row_label = {operating_cash:"经营流动现金流量净额",invest_cash:"投资活动现金流量净额",loan_cash:"融资活动现金流量净额"}
 
-    keyindex_row_idx = {}
-    keyindex_row_label.each do |k,v|
-      idx = keyindex_row_title.index(v)
-      unless idx
-        puts "cant find #{v} from labels of #{stock.code}"
-        next
-      end
-
-      keyindex_row_idx[k] = idx + 1
-    end
-
-    debt_row_idx = {}
-    debt_row_label.each do |k,v|
-      idx = debt_row_title.index(v)
-      unless idx
-        puts "cant find #{v} from labels of #{stock.code}"
-        next
-      end
-
-      debt_row_idx[k] = idx + 1
-    end
+    keyindex_row_idx = calc_row_idx keyindex_row_label,keyindex_row_title, stock.code
+    debt_row_idx = calc_row_idx debt_row_label,debt_row_title, stock.code
+    cash_row_idx = calc_row_idx cash_row_label,cash_row_title,stock.code
 
     # 填充表格
     cols.each_with_index do |col,idx|
@@ -362,9 +324,36 @@ class FinReport < ActiveRecord::Base
       debt_row_idx.each do |field,row|
         records[idx][field] = debt_report[row][col]
       end
+
+      cash_row_idx.each do |field,row|
+        records[idx][field] = cash_report[row][col]
+      end
     end
 
     records
+  end
+
+  def self.calc_row_idx(cash_row_label,cash_row_title, code)
+    cash_row_idx = {}
+    cash_row_label.each do |k,v|
+      idx = nil
+      if v.is_a? Array
+        v.each do |e|
+          idx = cash_row_title.index(e)
+          break if idx
+        end
+      else
+        idx = cash_row_title.index(v)
+      end
+      unless idx
+        puts "cant find #{v} from labels of #{code}"
+        next
+      end
+
+      cash_row_idx[k] = idx + 1
+    end
+
+    cash_row_idx
   end
 
 =begin
