@@ -8,5 +8,7 @@ class CreateStocks < ActiveRecord::Migration
 
       t.timestamps
     end
+
+    add_index :stocks, :code,:unique => true
   end
 end

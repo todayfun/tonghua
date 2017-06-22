@@ -159,7 +159,7 @@ rsp.body:
         if stock.stamp == "us"
           stock.gpcode = stock.code.match(/[A-Z]/)[1]
         else
-          stock.gpcode = stock.code
+          stock.gpcode = stock.code.sub(/hk/,"")
         end
 
         stock.save

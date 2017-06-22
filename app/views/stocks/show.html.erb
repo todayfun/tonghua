@@ -47,10 +47,10 @@
   <% @fin_reports.each do |fin_report| %>
       <tr>
         <td><%= fin_report.fd_repdate.to_date %></td>
-        <td><%= fin_report_label fin_report.fd_type %></td>
+        <td><%= FinReport.fin_report_label fin_report.fd_type %></td>
         <td></td>
         <td><%= fin_report.fd_profit_base_share %></td>
-        <td><%= cash_base_share(@stock.stamp,@stock.gb,fin_report.fd_cash_and_deposit)  %></td>
+        <td><%= FinReport.cash_base_share(@stock.gb,fin_report.fd_cash_and_deposit)  %></td>
         <td><%= fin_report.fd_cash_and_deposit %></td>
         <td></td>
         <td><%= fin_report.fd_non_liquid_debts %></td>

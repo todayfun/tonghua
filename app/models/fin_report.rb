@@ -419,4 +419,233 @@ class FinReport < ActiveRecord::Base
     end
     records.values
   end
+
+  def self.filter_by_operating_cash_of_q_matrix(stocks)
+    filter_stocks = []
+    stocks.each do |stock|
+      fin_reports = FinReport.where(fd_code:stock.code).order("fd_repdate desc").limit(8).all
+      q_matrix_meta = q_matrix_with_meta stock, fin_reports
+
+      up_cnt = 0
+      cnt = 0
+      q_matrix_meta[:idx][0..-1].each do |e|
+        uk = "#{e[0]},#{e[1]}"
+        prev_year = e[0].to_i - 1
+        prev_year_uk = "#{prev_year},#{e[1]}"
+
+        if q_matrix_meta[:operating_cash][uk] && q_matrix_meta[:operating_cash][prev_year_uk]
+          if q_matrix_meta[:operating_cash][uk] > q_matrix_meta[:operating_cash][prev_year_uk]
+            up_cnt += 1
+          end
+        end
+
+        cnt += 1
+        break if cnt>=4
+      end
+
+      filter_stocks << stock if up_cnt >=3
+    end
+
+    filter_stocks
+  end
+
+  # 计算年报数据
+  def self.fy_matrix stock,fin_reports
+    dest_currency = stock.stamp=='us' ? FinReport::CURRENCY_USD : FinReport::CURRENCY_HKD
+    currency = nil
+
+    # 计算年报
+    fy_matrix = {fd_year:[],fd_price:[],fd_profit_base_share:[],fd_cash_base_share:[],fd_debt_rate:[],fd_virtual_profit_base_share:[],
+                 pe:[],up_rate_of_profit:[]}
+    fin_reports.each do |r|
+      next if r.fd_type != FinReport::TYPE_ANNUAL
+
+      currency = r.currency
+      fy_matrix[:fd_year] << r.fd_year
+      fy_matrix[:fd_price] << Monthline.where("code='#{stock.code}' and day <= '#{r.fd_repdate.to_date}'").order("day desc").first.try(:close)
+      fy_matrix[:fd_profit_base_share] << currency_translate(r.fd_profit_base_share,currency,dest_currency)
+      fy_matrix[:fd_cash_base_share] << currency_translate(cash_base_share(stock.gb,r.fd_cash_and_deposit),currency,dest_currency)
+      fy_matrix[:fd_debt_rate] << stkholder_rights_of_debt(r.fd_non_liquid_debts,r.fd_stkholder_rights)
+    end
+
+    fy_matrix[:fd_profit_base_share].each_with_index do |e,idx|
+      rate = if e && fy_matrix[:fd_profit_base_share][idx+1]
+               ((e - fy_matrix[:fd_profit_base_share][idx+1]) * 100/ fy_matrix[:fd_profit_base_share][idx+1]).round(2)
+             else
+               nil
+             end
+
+      fy_matrix[:up_rate_of_profit] << rate
+    end
+
+    fy_matrix[:fd_price].each_with_index do |p,idx|
+      pe = if p && fy_matrix[:fd_profit_base_share][idx] && fy_matrix[:fd_profit_base_share][idx]>0
+             ((p)/ fy_matrix[:fd_profit_base_share][idx]).round(2)
+           else
+             nil
+           end
+
+      fy_matrix[:pe] << pe
+    end
+
+    fy_matrix
+  end
+
+  # 计算季报
+  def self.q_matrix(stock,fin_reports)
+    dest_currency = stock.stamp=='us' ? FinReport::CURRENCY_USD : FinReport::CURRENCY_HKD
+    currency = nil
+
+    q_matrix = {fd_repdate:[],fd_price:[],fd_profit_base_share:[],fd_cash_base_share:[],fd_debt_rate:[],fd_rights_rate:[],
+                operating_cash:[],invest_cash:[],loan_cash:[],up_rate_of_profit:[],sum_profit_of_lastyear:[],pe:[]}
+    cnt = 0
+    q_matrix_meta = {idx:[],profit_base_share:{},operating_cash:{}}
+    fin_reports.each do |r|
+      currency = r.currency
+      q_matrix[:fd_repdate] << "#{r.fd_repdate.strftime '%Y%m%d'}<br/>#{fin_report_label r.fd_type}"
+      q_matrix[:fd_price] << Monthline.where("code='#{stock.code}' and day <= '#{r.fd_repdate.to_date}'").order("day desc").first.try(:close)
+      q_matrix[:fd_profit_base_share] << currency_translate(r.fd_profit_base_share,currency,dest_currency)
+      q_matrix[:fd_cash_base_share] << currency_translate(cash_base_share(stock.gb,r.fd_cash_and_deposit),currency,dest_currency)
+      q_matrix[:fd_rights_rate] << stkholder_rights_of_debt(r.fd_non_liquid_debts,r.fd_stkholder_rights)
+      q_matrix[:fd_debt_rate] << debt_rate_of_asset(r.fd_liquid_assets,r.fd_liquid_debts)
+      q_matrix[:operating_cash] << currency_translate(cash_base_share(stock.gb,r.operating_cash),currency,dest_currency)
+      q_matrix[:invest_cash] << currency_translate(cash_base_share(stock.gb,r.invest_cash),currency,dest_currency)
+      q_matrix[:loan_cash] << currency_translate(cash_base_share(stock.gb,r.loan_cash),currency,dest_currency)
+
+      q_matrix_meta[:operating_cash]["#{r.fd_year},#{r.fd_type}"] = q_matrix[:operating_cash].last
+      q_matrix_meta[:profit_base_share]["#{r.fd_year},#{r.fd_type}"] = r.fd_profit_base_share
+      q_matrix_meta[:idx] << [r.fd_year,r.fd_type]
+
+      cnt += 1
+      break if cnt > 12
+    end
+
+    q_matrix_meta[:idx][0..-1].each do |e|
+      uk = "#{e[0]},#{e[1]}"
+      prev_year = e[0].to_i - 1
+      prev_year_uk = "#{prev_year},#{e[1]}"
+      rate = if q_matrix_meta[:profit_base_share][uk] && q_matrix_meta[:profit_base_share][prev_year_uk]  && q_matrix_meta[:profit_base_share][prev_year_uk]>0
+               ((q_matrix_meta[:profit_base_share][uk] - q_matrix_meta[:profit_base_share][prev_year_uk]) * 100/ q_matrix_meta[:profit_base_share][prev_year_uk]).round(2)
+             else
+               nil
+             end
+      q_matrix[:up_rate_of_profit] << rate
+
+      prev_fy_uk = "#{prev_year},#{FinReport::TYPE_ANNUAL}"
+      v = if q_matrix_meta[:profit_base_share][uk] && q_matrix_meta[:profit_base_share][prev_fy_uk] && q_matrix_meta[:profit_base_share][prev_year_uk]
+            (q_matrix_meta[:profit_base_share][uk] + (q_matrix_meta[:profit_base_share][prev_fy_uk] - q_matrix_meta[:profit_base_share][prev_year_uk])).round(2)
+          else
+            nil
+          end
+      q_matrix[:sum_profit_of_lastyear] << currency_translate(v,currency,dest_currency)
+    end
+
+    q_matrix[:fd_price].each_with_index do |p,idx|
+      pe = if p && q_matrix[:sum_profit_of_lastyear][idx] && q_matrix[:sum_profit_of_lastyear][idx]>0
+             ((p)/ q_matrix[:sum_profit_of_lastyear][idx]).round(2)
+           else
+             nil
+           end
+
+      q_matrix[:pe] << pe
+    end
+
+    q_matrix
+  end
+
+  # 获取季报及坐标
+  def self.q_matrix_with_meta(stock,fin_reports)
+    dest_currency = stock.stamp=='us' ? FinReport::CURRENCY_USD : FinReport::CURRENCY_HKD
+    cnt = 0
+    q_matrix_meta = {idx:[],profit_base_share:{},operating_cash:{}}
+    fin_reports.each do |r|
+      currency = r.currency
+      q_matrix_meta[:operating_cash]["#{r.fd_year},#{r.fd_type}"] = currency_translate(cash_base_share(stock.gb,r.operating_cash),currency,dest_currency)
+      q_matrix_meta[:idx] << [r.fd_year,r.fd_type]
+
+      cnt += 1
+      break if cnt > 12
+    end
+
+    q_matrix_meta
+  end
+  def self.cash_base_share(gb, cash)
+    return 0 if cash.nil? or gb.nil?
+    (gb>1 ? (cash *  FinReport::FIN_RPT_UNIT / gb).round(2) : 0)
+  end
+
+  def self.stkholder_rights_of_debt(fd_non_liquid_debts,fd_stkholder_rights)
+    unless fd_non_liquid_debts && fd_stkholder_rights
+      return nil
+    end
+
+    total = fd_non_liquid_debts + fd_stkholder_rights
+    if total < 0.001
+      0
+    else
+      (fd_stkholder_rights / total).round(4)
+    end
+  end
+
+  def self.debt_rate_of_asset(fd_non_liquid_debts,fd_stkholder_rights)
+    unless fd_non_liquid_debts && fd_stkholder_rights
+      return nil
+    end
+
+    total = fd_non_liquid_debts + fd_stkholder_rights
+    if total < 0.001
+      0
+    else
+      (fd_stkholder_rights / total).round(4)
+    end
+  end
+
+  def self.currency_translate(arr,src_currency,dest_currency)
+    if src_currency == dest_currency
+      arr
+    elsif src_currency == FinReport::CURRENCY_CNY && dest_currency == FinReport::CURRENCY_USD
+      if arr.is_a? Array
+        arr.map {|e| e.nil? ? e : (e * FinReport::CNY2USD_RATE).round(3)}
+      else
+        e = arr
+        e.nil? ? e : (e * FinReport::CNY2USD_RATE).round(3)
+      end
+    elsif src_currency == FinReport::CURRENCY_CNY && dest_currency == FinReport::CURRENCY_HKD
+      if arr.is_a? Array
+        arr.map {|e| e.nil? ? e : (e * FinReport::CNY2HKD_RATE).round(3)}
+      else
+        e = arr
+        e.nil? ? e : (e * FinReport::CNY2HKD_RATE).round(3)
+      end
+    elsif src_currency == FinReport::CURRENCY_USD && dest_currency == FinReport::CURRENCY_HKD
+      if arr.is_a? Array
+        arr.map {|e| e.nil? ? e : (e * FinReport::USD2HKD_RATE).round(3)}
+      else
+        e = arr
+        e.nil? ? e : (e * FinReport::USD2HKD_RATE).round(3)
+      end
+    else
+      logger.error "invalid currency translate: from #{src_currency} to #{dest_currency}"
+      arr
+    end
+  end
+
+  def self.fin_report_label(type)
+    case type
+      when FinReport::TYPE_Q1
+        "Q1"
+      when FinReport::TYPE_Q2
+        "Q2"
+      when FinReport::TYPE_Q3
+        "Q3"
+      when FinReport::TYPE_ANNUAL
+        "FY"
+      when FinReport::TYPE_SUM_Q2
+        "SUM_Q2"
+      when FinReport::TYPE_SUM_Q3
+        "SUM_Q3"
+      else
+        "invalid"
+    end
+  end
 end
