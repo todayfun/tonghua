@@ -424,7 +424,7 @@ class FinReport < ActiveRecord::Base
     filter_stocks = []
     stocks.each do |stock|
       fin_reports = FinReport.where(fd_code:stock.code).order("fd_repdate desc").limit(8).all
-      q_matrix_meta = q_matrix_with_meta stock, fin_reports
+      q_matrix_meta = q_summary(stock, fin_reports)[1]
 
       up_cnt = 0
       cnt = 0
@@ -449,14 +449,24 @@ class FinReport < ActiveRecord::Base
     filter_stocks
   end
 
+  def self.fy_matrix(stock,fin_reports)
+    fy_summary(stock,fin_reports)[0]
+  end
+
+  def self.q_matrix(stock,fin_reports)
+    q_summary(stock,fin_reports)[0]
+  end
+
   # 计算年报数据
-  def self.fy_matrix stock,fin_reports
+  def self.fy_summary stock,fin_reports
     dest_currency = stock.stamp=='us' ? FinReport::CURRENCY_USD : FinReport::CURRENCY_HKD
     currency = nil
 
     # 计算年报
     fy_matrix = {fd_year:[],fd_price:[],fd_profit_base_share:[],fd_cash_base_share:[],fd_debt_rate:[],fd_virtual_profit_base_share:[],
-                 pe:[],up_rate_of_profit:[]}
+                 pe:[],up_rate_of_profit:[],operating_cash:[],invest_cash:[],loan_cash:[]}
+
+    fy_matrix_meta = {idx:[],profit_base_share:{},operating_cash:{},pe:{},up_rate_of_profit:{},price:{}}
     klines = Dayline.where("code='#{stock.code}'").order("day desc").select("day,close").all
 
     fin_reports.each do |r|
@@ -468,40 +478,52 @@ class FinReport < ActiveRecord::Base
       fy_matrix[:fd_profit_base_share] << currency_translate(r.fd_profit_base_share,currency,dest_currency)
       fy_matrix[:fd_cash_base_share] << currency_translate(cash_base_share(stock.gb,r.fd_cash_and_deposit),currency,dest_currency)
       fy_matrix[:fd_debt_rate] << stkholder_rights_of_debt(r.fd_non_liquid_debts,r.fd_stkholder_rights)
+      fy_matrix[:operating_cash] << currency_translate(cash_base_share(stock.gb,r.operating_cash),currency,dest_currency)
+      fy_matrix[:invest_cash] << currency_translate(cash_base_share(stock.gb,r.invest_cash),currency,dest_currency)
+      fy_matrix[:loan_cash] << currency_translate(cash_base_share(stock.gb,r.loan_cash),currency,dest_currency)
+
+      uk = "#{r.fd_year},#{r.fd_type}"
+      fy_matrix_meta[:price][uk] = fy_matrix[:fd_price].last
+      fy_matrix_meta[:operating_cash][uk] = fy_matrix[:operating_cash].last
+      fy_matrix_meta[:profit_base_share][uk] = fy_matrix[:fd_profit_base_share].last
+      fy_matrix_meta[:idx] << [r.fd_year,r.fd_type]
     end
 
-    fy_matrix[:fd_profit_base_share].each_with_index do |e,idx|
-      rate = if e && fy_matrix[:fd_profit_base_share][idx+1]
-               ((e - fy_matrix[:fd_profit_base_share][idx+1]) * 100/ fy_matrix[:fd_profit_base_share][idx+1]).round(2)
+    fy_matrix_meta[:idx][0..-1].each_with_index do |e,idx|
+      uk = "#{e[0]},#{e[1]}"
+      prev_year = e[0].to_i - 1
+      prev_year_uk = "#{prev_year},#{e[1]}"
+
+      rate = if fy_matrix_meta[:profit_base_share][uk] && fy_matrix_meta[:profit_base_share][prev_year_uk]  && fy_matrix_meta[:profit_base_share][prev_year_uk]>0
+               ((fy_matrix_meta[:profit_base_share][uk] - fy_matrix_meta[:profit_base_share][prev_year_uk]) * 100/ fy_matrix_meta[:profit_base_share][prev_year_uk]).round(2)
              else
                nil
              end
-
       fy_matrix[:up_rate_of_profit] << rate
-    end
+      fy_matrix_meta[:up_rate_of_profit][uk] = rate
 
-    fy_matrix[:fd_price].each_with_index do |p,idx|
+      # calc pe
       pe = if p && fy_matrix[:fd_profit_base_share][idx] && fy_matrix[:fd_profit_base_share][idx]>0
              ((p)/ fy_matrix[:fd_profit_base_share][idx]).round(2)
            else
              nil
            end
-
       fy_matrix[:pe] << pe
+      fy_matrix_meta[:pe][uk] = pe
     end
 
-    fy_matrix
+    [fy_matrix,fy_matrix_meta]
   end
 
   # 计算季报
-  def self.q_matrix(stock,fin_reports)
+  def self.q_summary(stock,fin_reports)
     dest_currency = stock.stamp=='us' ? FinReport::CURRENCY_USD : FinReport::CURRENCY_HKD
     currency = nil
 
     q_matrix = {fd_repdate:[],fd_price:[],fd_profit_base_share:[],fd_cash_base_share:[],fd_debt_rate:[],fd_rights_rate:[],
                 operating_cash:[],invest_cash:[],loan_cash:[],up_rate_of_profit:[],sum_profit_of_lastyear:[],pe:[]}
     cnt = 0
-    q_matrix_meta = {idx:[],profit_base_share:{},operating_cash:{}}
+    q_matrix_meta = {idx:[],profit_base_share:{},operating_cash:{},pe:{},up_rate_of_profit:{},sum_profit_of_lastyear:{},price:{}}
     klines = Dayline.where("code='#{stock.code}'").order("day desc").select("day,close").all
     fin_reports.each do |r|
       currency = r.currency
@@ -515,15 +537,17 @@ class FinReport < ActiveRecord::Base
       q_matrix[:invest_cash] << currency_translate(cash_base_share(stock.gb,r.invest_cash),currency,dest_currency)
       q_matrix[:loan_cash] << currency_translate(cash_base_share(stock.gb,r.loan_cash),currency,dest_currency)
 
-      q_matrix_meta[:operating_cash]["#{r.fd_year},#{r.fd_type}"] = q_matrix[:operating_cash].last
-      q_matrix_meta[:profit_base_share]["#{r.fd_year},#{r.fd_type}"] = r.fd_profit_base_share
+      uk = "#{r.fd_year},#{r.fd_type}"
+      q_matrix_meta[:price][uk] = q_matrix[:fd_price].last
+      q_matrix_meta[:operating_cash][uk] = q_matrix[:operating_cash].last
+      q_matrix_meta[:profit_base_share][uk] = q_matrix[:fd_profit_base_share].last
       q_matrix_meta[:idx] << [r.fd_year,r.fd_type]
 
       cnt += 1
       break if cnt > 12
     end
 
-    q_matrix_meta[:idx][0..-1].each do |e|
+    q_matrix_meta[:idx][0..-1].each_with_index do |e,idx|
       uk = "#{e[0]},#{e[1]}"
       prev_year = e[0].to_i - 1
       prev_year_uk = "#{prev_year},#{e[1]}"
@@ -533,6 +557,7 @@ class FinReport < ActiveRecord::Base
                nil
              end
       q_matrix[:up_rate_of_profit] << rate
+      q_matrix_meta[:up_rate_of_profit][uk] = rate
 
       prev_fy_uk = "#{prev_year},#{FinReport::TYPE_ANNUAL}"
       v = if q_matrix_meta[:profit_base_share][uk] && q_matrix_meta[:profit_base_share][prev_fy_uk] && q_matrix_meta[:profit_base_share][prev_year_uk]
@@ -541,19 +566,19 @@ class FinReport < ActiveRecord::Base
             nil
           end
       q_matrix[:sum_profit_of_lastyear] << currency_translate(v,currency,dest_currency)
-    end
+      q_matrix_meta[:sum_profit_of_lastyear][uk] = q_matrix[:sum_profit_of_lastyear].last
 
-    q_matrix[:fd_price].each_with_index do |p,idx|
+      # calc pe
       pe = if p && q_matrix[:sum_profit_of_lastyear][idx] && q_matrix[:sum_profit_of_lastyear][idx]>0
              ((p)/ q_matrix[:sum_profit_of_lastyear][idx]).round(2)
            else
              nil
            end
-
       q_matrix[:pe] << pe
+      q_matrix_meta[:pe][uk] = pe
     end
 
-    q_matrix
+    [q_matrix,q_matrix_meta]
   end
 
   def self.close_price(klines, day)
@@ -568,22 +593,6 @@ class FinReport < ActiveRecord::Base
     r.nil? ? nil : r.close
   end
 
-  # 获取季报及坐标
-  def self.q_matrix_with_meta(stock,fin_reports)
-    dest_currency = stock.stamp=='us' ? FinReport::CURRENCY_USD : FinReport::CURRENCY_HKD
-    cnt = 0
-    q_matrix_meta = {idx:[],profit_base_share:{},operating_cash:{}}
-    fin_reports.each do |r|
-      currency = r.currency
-      q_matrix_meta[:operating_cash]["#{r.fd_year},#{r.fd_type}"] = currency_translate(cash_base_share(stock.gb,r.operating_cash),currency,dest_currency)
-      q_matrix_meta[:idx] << [r.fd_year,r.fd_type]
-
-      cnt += 1
-      break if cnt > 12
-    end
-
-    q_matrix_meta
-  end
   def self.cash_base_share(gb, cash)
     return 0 if cash.nil? or gb.nil?
     (gb>1 ? (cash *  FinReport::FIN_RPT_UNIT / gb).round(2) : 0)
