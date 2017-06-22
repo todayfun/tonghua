@@ -1,0 +1,40 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Code:</b>
+  <%= @dayline.code %>
+</p>
+
+<p>
+  <b>Day:</b>
+  <%= @dayline.day %>
+</p>
+
+<p>
+  <b>Open:</b>
+  <%= @dayline.open %>
+</p>
+
+<p>
+  <b>Close:</b>
+  <%= @dayline.close %>
+</p>
+
+<p>
+  <b>High:</b>
+  <%= @dayline.high %>
+</p>
+
+<p>
+  <b>Low:</b>
+  <%= @dayline.low %>
+</p>
+
+<p>
+  <b>Vol:</b>
+  <%= @dayline.vol %>
+</p>
+
+
+<%= link_to 'Edit', edit_dayline_path(@dayline) %> |
+<%= link_to 'Back', daylines_path %>

@@ -11,7 +11,23 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20170619135348) do
+ActiveRecord::Schema.define(:version => 20170622133803) do
+
+  create_table "daylines", :force => true do |t|
+    t.string   "code"
+    t.date     "day"
+    t.float    "open"
+    t.float    "close"
+    t.float    "high"
+    t.float    "low"
+    t.integer  "vol"
+    t.datetime "created_at", :null => false
+    t.datetime "updated_at", :null => false
+  end
+
+  add_index "daylines", ["close"], :name => "index_daylines_on_close"
+  add_index "daylines", ["code", "day"], :name => "index_daylines_on_code_and_day", :unique => true
+  add_index "daylines", ["open"], :name => "index_daylines_on_open"
 
   create_table "fin_reports", :force => true do |t|
     t.string   "fd_code"
@@ -125,6 +141,7 @@ ActiveRecord::Schema.define(:version => 20170619135348) do
     t.string   "gpcode"
   end
 
+  add_index "stocks", ["code"], :name => "sqlite_autoindex_stocks_1", :unique => true
   add_index "stocks", ["gpcode"], :name => "index_stocks_on_gpcode"
   add_index "stocks", ["monthrise"], :name => "index_stocks_on_monthrise"
   add_index "stocks", ["weekrise"], :name => "index_stocks_on_weekrise"

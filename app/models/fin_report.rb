@@ -457,12 +457,14 @@ class FinReport < ActiveRecord::Base
     # 计算年报
     fy_matrix = {fd_year:[],fd_price:[],fd_profit_base_share:[],fd_cash_base_share:[],fd_debt_rate:[],fd_virtual_profit_base_share:[],
                  pe:[],up_rate_of_profit:[]}
+    klines = Dayline.where("code='#{stock.code}'").order("day desc").select("day,close").all
+
     fin_reports.each do |r|
       next if r.fd_type != FinReport::TYPE_ANNUAL
 
       currency = r.currency
       fy_matrix[:fd_year] << r.fd_year
-      fy_matrix[:fd_price] << Monthline.where("code='#{stock.code}' and day <= '#{r.fd_repdate.to_date}'").order("day desc").first.try(:close)
+      fy_matrix[:fd_price] << close_price(klines,r.fd_repdate.to_date)
       fy_matrix[:fd_profit_base_share] << currency_translate(r.fd_profit_base_share,currency,dest_currency)
       fy_matrix[:fd_cash_base_share] << currency_translate(cash_base_share(stock.gb,r.fd_cash_and_deposit),currency,dest_currency)
       fy_matrix[:fd_debt_rate] << stkholder_rights_of_debt(r.fd_non_liquid_debts,r.fd_stkholder_rights)
@@ -500,10 +502,11 @@ class FinReport < ActiveRecord::Base
                 operating_cash:[],invest_cash:[],loan_cash:[],up_rate_of_profit:[],sum_profit_of_lastyear:[],pe:[]}
     cnt = 0
     q_matrix_meta = {idx:[],profit_base_share:{},operating_cash:{}}
+    klines = Dayline.where("code='#{stock.code}'").order("day desc").select("day,close").all
     fin_reports.each do |r|
       currency = r.currency
       q_matrix[:fd_repdate] << "#{r.fd_repdate.strftime '%Y%m%d'}<br/>#{fin_report_label r.fd_type}"
-      q_matrix[:fd_price] << Monthline.where("code='#{stock.code}' and day <= '#{r.fd_repdate.to_date}'").order("day desc").first.try(:close)
+      q_matrix[:fd_price] << close_price(klines,r.fd_repdate.to_date)
       q_matrix[:fd_profit_base_share] << currency_translate(r.fd_profit_base_share,currency,dest_currency)
       q_matrix[:fd_cash_base_share] << currency_translate(cash_base_share(stock.gb,r.fd_cash_and_deposit),currency,dest_currency)
       q_matrix[:fd_rights_rate] << stkholder_rights_of_debt(r.fd_non_liquid_debts,r.fd_stkholder_rights)
@@ -551,6 +554,18 @@ class FinReport < ActiveRecord::Base
     end
 
     q_matrix
+  end
+
+  def self.close_price(klines, day)
+    r = nil
+    klines.each do |row|
+      if row.day <= day
+        r = row
+        break
+      end
+    end
+
+    r.nil? ? nil : r.close
   end
 
   # 获取季报及坐标

@@ -2,6 +2,7 @@ class Runlog < ActiveRecord::Base
   attr_accessible :code, :name, :run_at, :status
 
   NAME_FINRPT = "FINRPT"
+  NAME_DAYLINE = "DAYLINE"
   NAME_WEEKLINE = "WEEKLINE"
   NAME_MONTHLINE = "MONTHLINE"
   NAME_STOCK_SUMMARY = "STOCK_SUMMARY"

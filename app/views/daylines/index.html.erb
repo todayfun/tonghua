@@ -1,0 +1,35 @@
+<h1>Listing daylines</h1>
+
+<table>
+  <tr>
+    <th>Code</th>
+    <th>Day</th>
+    <th>Open</th>
+    <th>Close</th>
+    <th>High</th>
+    <th>Low</th>
+    <th>Vol</th>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @daylines.each do |dayline| %>
+  <tr>
+    <td><%= dayline.code %></td>
+    <td><%= dayline.day %></td>
+    <td><%= dayline.open %></td>
+    <td><%= dayline.close %></td>
+    <td><%= dayline.high %></td>
+    <td><%= dayline.low %></td>
+    <td><%= dayline.vol %></td>
+    <td><%= link_to 'Show', dayline %></td>
+    <td><%= link_to 'Edit', edit_dayline_path(dayline) %></td>
+    <td><%= link_to 'Destroy', dayline, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New Dayline', new_dayline_path %>
