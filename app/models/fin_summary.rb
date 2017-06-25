@@ -49,7 +49,7 @@ class FinSummary < ActiveRecord::Base
 
     uprate_vs_pe = nil
     if stock.pe && q_matrix[:up_rate_of_profit][0] && q_matrix[:up_rate_of_profit][1]
-      if (stock.pe < q_matrix[:up_rate_of_profit][0] * 0.7) && q_matrix[:up_rate_of_profit][1] > stock.pe * 0.5 && q_matrix[:up_rate_of_profit][0]>30
+      if (stock.pe < q_matrix[:up_rate_of_profit][0] * 0.7) && q_matrix[:up_rate_of_profit][1] > 15 && q_matrix[:up_rate_of_profit][0]>30 && stock.pe < 60
         uprate_vs_pe = (q_matrix[:up_rate_of_profit][0]/stock.pe).round(1)
       end
     end
