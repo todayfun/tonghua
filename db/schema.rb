@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20170622133803) do
+ActiveRecord::Schema.define(:version => 20170625123510) do
 
   create_table "daylines", :force => true do |t|
     t.string   "code"
@@ -54,6 +54,18 @@ ActiveRecord::Schema.define(:version => 20170622133803) do
 
   add_index "fin_reports", ["fd_code", "fd_year", "fd_type"], :name => "index_fin_reports_on_fd_code_and_fd_year_and_fd_type", :unique => true
   add_index "fin_reports", ["fd_code"], :name => "index_fin_reports_on_fd_code"
+
+  create_table "fin_summaries", :force => true do |t|
+    t.string   "code"
+    t.date     "repdate"
+    t.string   "type"
+    t.text     "matrix"
+    t.text     "matrix_meta"
+    t.datetime "created_at",  :null => false
+    t.datetime "updated_at",  :null => false
+  end
+
+  add_index "fin_summaries", ["code", "repdate", "type"], :name => "index_fin_summaries_on_code_and_repdate_and_type", :unique => true
 
   create_table "gupiao_deals", :force => true do |t|
     t.string   "name"
@@ -139,6 +151,8 @@ ActiveRecord::Schema.define(:version => 20170622133803) do
     t.float    "pe"
     t.string   "name"
     t.string   "gpcode"
+    t.text     "good"
+    t.text     "bad"
   end
 
   add_index "stocks", ["code"], :name => "sqlite_autoindex_stocks_1", :unique => true

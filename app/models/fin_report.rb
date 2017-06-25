@@ -420,35 +420,6 @@ class FinReport < ActiveRecord::Base
     records.values
   end
 
-  def self.filter_by_operating_cash_of_q_matrix(stocks)
-    filter_stocks = []
-    stocks.each do |stock|
-      fin_reports = FinReport.where(fd_code:stock.code).order("fd_repdate desc").limit(8).all
-      q_matrix_meta = q_summary(stock, fin_reports)[1]
-
-      up_cnt = 0
-      cnt = 0
-      q_matrix_meta[:idx][0..-1].each do |e|
-        uk = "#{e[0]},#{e[1]}"
-        prev_year = e[0].to_i - 1
-        prev_year_uk = "#{prev_year},#{e[1]}"
-
-        if q_matrix_meta[:operating_cash][uk] && q_matrix_meta[:operating_cash][prev_year_uk]
-          if q_matrix_meta[:operating_cash][uk] > q_matrix_meta[:operating_cash][prev_year_uk]
-            up_cnt += 1
-          end
-        end
-
-        cnt += 1
-        break if cnt>=4
-      end
-
-      filter_stocks << stock if up_cnt >=3
-    end
-
-    filter_stocks
-  end
-
   def self.fy_matrix(stock,fin_reports)
     fy_summary(stock,fin_reports)[0]
   end
@@ -467,14 +438,12 @@ class FinReport < ActiveRecord::Base
                  pe:[],up_rate_of_profit:[],operating_cash:[],invest_cash:[],loan_cash:[]}
 
     fy_matrix_meta = {idx:[],profit_base_share:{},operating_cash:{},pe:{},up_rate_of_profit:{},price:{}}
-    klines = Dayline.where("code='#{stock.code}'").order("day desc").select("day,close").all
-
     fin_reports.each do |r|
       next if r.fd_type != FinReport::TYPE_ANNUAL
 
       currency = r.currency
       fy_matrix[:fd_year] << r.fd_year
-      fy_matrix[:fd_price] << close_price(klines,r.fd_repdate.to_date)
+      fy_matrix[:fd_price] << currency_translate(Dayline.where("code='#{stock.code}' and day<'#{r.fd_repdate.to_date}'").order("day desc").select("day,close").first.try(:close),currency,dest_currency)
       fy_matrix[:fd_profit_base_share] << currency_translate(r.fd_profit_base_share,currency,dest_currency)
       fy_matrix[:fd_cash_base_share] << currency_translate(cash_base_share(stock.gb,r.fd_cash_and_deposit),currency,dest_currency)
       fy_matrix[:fd_debt_rate] << stkholder_rights_of_debt(r.fd_non_liquid_debts,r.fd_stkholder_rights)
@@ -503,8 +472,8 @@ class FinReport < ActiveRecord::Base
       fy_matrix_meta[:up_rate_of_profit][uk] = rate
 
       # calc pe
-      pe = if p && fy_matrix[:fd_profit_base_share][idx] && fy_matrix[:fd_profit_base_share][idx]>0
-             ((p)/ fy_matrix[:fd_profit_base_share][idx]).round(2)
+      pe = if fy_matrix[:fd_price][idx] && fy_matrix[:fd_profit_base_share][idx] && fy_matrix[:fd_profit_base_share][idx]>0
+             ((fy_matrix[:fd_price][idx])/ fy_matrix[:fd_profit_base_share][idx]).round(2)
            else
              nil
            end
@@ -524,11 +493,10 @@ class FinReport < ActiveRecord::Base
                 operating_cash:[],invest_cash:[],loan_cash:[],up_rate_of_profit:[],sum_profit_of_lastyear:[],pe:[]}
     cnt = 0
     q_matrix_meta = {idx:[],profit_base_share:{},operating_cash:{},pe:{},up_rate_of_profit:{},sum_profit_of_lastyear:{},price:{}}
-    klines = Dayline.where("code='#{stock.code}'").order("day desc").select("day,close").all
     fin_reports.each do |r|
       currency = r.currency
       q_matrix[:fd_repdate] << "#{r.fd_repdate.strftime '%Y%m%d'}<br/>#{fin_report_label r.fd_type}"
-      q_matrix[:fd_price] << close_price(klines,r.fd_repdate.to_date)
+      q_matrix[:fd_price] << currency_translate(Dayline.where("code='#{stock.code}' and day<'#{r.fd_repdate.to_date}'").order("day desc").select("day,close").first.try(:close),currency,dest_currency)
       q_matrix[:fd_profit_base_share] << currency_translate(r.fd_profit_base_share,currency,dest_currency)
       q_matrix[:fd_cash_base_share] << currency_translate(cash_base_share(stock.gb,r.fd_cash_and_deposit),currency,dest_currency)
       q_matrix[:fd_rights_rate] << stkholder_rights_of_debt(r.fd_non_liquid_debts,r.fd_stkholder_rights)
@@ -569,8 +537,8 @@ class FinReport < ActiveRecord::Base
       q_matrix_meta[:sum_profit_of_lastyear][uk] = q_matrix[:sum_profit_of_lastyear].last
 
       # calc pe
-      pe = if p && q_matrix[:sum_profit_of_lastyear][idx] && q_matrix[:sum_profit_of_lastyear][idx]>0
-             ((p)/ q_matrix[:sum_profit_of_lastyear][idx]).round(2)
+      pe = if q_matrix[:fd_price][idx] && q_matrix[:sum_profit_of_lastyear][idx] && q_matrix[:sum_profit_of_lastyear][idx]>0
+             ((q_matrix[:fd_price][idx])/ q_matrix[:sum_profit_of_lastyear][idx]).round(2)
            else
              nil
            end

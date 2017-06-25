@@ -3,19 +3,17 @@
 <table>
   <tr>
     <th>Code</th>
+    <th>Name</th>
     <th>股价</th>
-    <th>PE</th>
-    <th>52周最高</th>
-    <th>52周最低</th>
+    <th>增长_VS_PE</th>
   </tr>
 
 <% @stocks.each do |stock| %>
   <tr>
     <td><%= link_to "#{stock.code}#{riselabel(stock)}", stockurl(stock.code,stock.stamp), :target=>'_blank' %></td>
+    <td><%= truncate(stock.name, length:12)  %></td>
     <td><%= stock.price %></td>
-    <td><%= stock.pe %></td>
-    <td><%= stock.high52w %></td>
-    <td><%= stock.low52w %></td>
+    <td><%= stock.good["uprate_vs_pe"] %></td>
     <td><%= link_to "本地图表", stock%></td>
     <td><%= link_to "同花顺图表", link_to_tonghuashun_finance(stock), :target=>'_blank'%></td>
   </tr>

@@ -20,6 +20,7 @@ class Dayline < ActiveRecord::Base
           end_date = end_date.prev_year
 
           break if begin_date.year < lastest_day.year
+          break if status == Runlog::STATUS_IGNORE
         end
 
         Runlog.update_log stock.code,Runlog::NAME_DAYLINE,status
@@ -29,7 +30,7 @@ class Dayline < ActiveRecord::Base
       end
     end
 
-    total_imported = dayline.count("distinct code")
+    total_imported = Dayline.count("distinct code")
     total_stotck = Stock.count("distinct code")
     puts "new import dayline: #{new_imported}, total imported: #{total_imported}, total stock: #{total_stotck}"
   end

@@ -4,8 +4,7 @@ class StocksController < ApplicationController
   # GET /stocks
   # GET /stocks.json
   def index
-    @stocks = Stock.where("weekrise>0").where("monthrise>0").order("monthrise desc,weekrise desc")
-    @stocks = FinReport.filter_by_operating_cash_of_q_matrix @stocks
+    @stocks = Stock.where("(weekrise>0 and monthrise>0 or good <> '{}' ) and bad='{}'").order("monthrise desc,weekrise desc").all
 
     respond_to do |format|
       format.html # index.html.erb
