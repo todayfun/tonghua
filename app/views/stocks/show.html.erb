@@ -6,6 +6,7 @@
   <%= link_to 'refresh', stock_path(@stock,refresh:true) %>
   <%= link_to 'without refresh', stock_path(@stock) %>
   <%= link_to "同花顺图表", link_to_tonghuashun_finance(@stock), :target=>'_blank'%>
+  <%= link_to "QQ自选股", stockurl(@stock.code,@stock.stamp), :target=>'_blank' %>
 
   <table>
     <tr>

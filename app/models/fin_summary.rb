@@ -55,7 +55,7 @@ class FinSummary < ActiveRecord::Base
     end
 
     # 经营现金流要增长
-    up_cnt = 0
+    up_cash_cnt = 0
     cnt = 0
     q_matrix_meta[:idx][0..-1].each do |e|
       uk = "#{e[0]},#{e[1]}"
@@ -64,7 +64,7 @@ class FinSummary < ActiveRecord::Base
 
       if q_matrix_meta[:operating_cash][uk] && q_matrix_meta[:operating_cash][prev_year_uk]
         if q_matrix_meta[:operating_cash][uk] > q_matrix_meta[:operating_cash][prev_year_uk]
-          up_cnt += 1
+          up_cash_cnt += 1
         end
       end
 
@@ -72,7 +72,20 @@ class FinSummary < ActiveRecord::Base
       break if cnt>=4
     end
 
-    if uprate_vs_pe && up_cnt>=3
+    # 增长率要比较稳定
+    ary = q_matrix[:up_rate_of_profit][0..3].compact
+    flg_up_rate = true
+    unless ary.empty?
+      min = ary.min
+      max = ary.max
+      if min > 5
+
+      else
+        flg_up_rate = false
+      end
+    end
+
+    if uprate_vs_pe && up_cash_cnt>=3 && flg_up_rate
       good[:uprate_vs_pe] = uprate_vs_pe
     end
 

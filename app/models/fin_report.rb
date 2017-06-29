@@ -443,7 +443,7 @@ class FinReport < ActiveRecord::Base
 
       currency = r.currency
       fy_matrix[:fd_year] << r.fd_year
-      fy_matrix[:fd_price] << currency_translate(Dayline.where("code='#{stock.code}' and day<'#{r.fd_repdate.to_date}'").order("day desc").select("day,close").first.try(:close),currency,dest_currency)
+      fy_matrix[:fd_price] << Dayline.where("code='#{stock.code}' and day<='#{r.fd_repdate.to_date}'").order("day desc").select("day,close").first.try(:close)
       fy_matrix[:fd_profit_base_share] << currency_translate(r.fd_profit_base_share,currency,dest_currency)
       fy_matrix[:fd_cash_base_share] << currency_translate(cash_base_share(stock.gb,r.fd_cash_and_deposit),currency,dest_currency)
       fy_matrix[:fd_debt_rate] << stkholder_rights_of_debt(r.fd_non_liquid_debts,r.fd_stkholder_rights)
@@ -496,7 +496,7 @@ class FinReport < ActiveRecord::Base
     fin_reports.each do |r|
       currency = r.currency
       q_matrix[:fd_repdate] << "#{r.fd_repdate.strftime '%Y%m%d'}<br/>#{fin_report_label r.fd_type}"
-      q_matrix[:fd_price] << currency_translate(Dayline.where("code='#{stock.code}' and day<'#{r.fd_repdate.to_date}'").order("day desc").select("day,close").first.try(:close),currency,dest_currency)
+      q_matrix[:fd_price] << Dayline.where("code='#{stock.code}' and day<='#{r.fd_repdate.to_date}'").order("day desc").select("day,close").first.try(:close)
       q_matrix[:fd_profit_base_share] << currency_translate(r.fd_profit_base_share,currency,dest_currency)
       q_matrix[:fd_cash_base_share] << currency_translate(cash_base_share(stock.gb,r.fd_cash_and_deposit),currency,dest_currency)
       q_matrix[:fd_rights_rate] << stkholder_rights_of_debt(r.fd_non_liquid_debts,r.fd_stkholder_rights)
