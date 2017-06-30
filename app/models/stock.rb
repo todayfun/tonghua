@@ -225,4 +225,32 @@ rsp.body:
 
     full_code
   end
+
+  def mark_good_or_bad!(mark)
+    good = self.good || {}
+    bad = self.bad || {}
+
+    if mark == "good"
+      good["mark_at"] = Date.today.to_s
+      bad.delete "mark_at"
+
+      self.good = good
+      self.bad = bad
+      self.save
+    elsif mark == "bad"
+      bad["mark_at"] = Date.today.to_s
+      good.delete "mark_at"
+
+      self.bad = bad
+      self.good = good
+      self.save
+    elsif mark = "clear"
+      good.delete "mark_at"
+      bad.delete "mark_at"
+
+      self.bad = bad
+      self.good = good
+      self.save
+    end
+  end
 end

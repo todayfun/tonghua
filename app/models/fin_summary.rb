@@ -28,7 +28,7 @@ class FinSummary < ActiveRecord::Base
     q_matrix,q_matrix_meta = FinReport.q_summary stock,fin_reports
 
     good = stock_good(stock,q_matrix,q_matrix_meta)
-    bad = stock_bad(q_matrix,q_matrix_meta)
+    bad = stock_bad(stock,q_matrix,q_matrix_meta)
     stock.update_attributes good:good,bad:bad
 
     #FinSummary.create code:stock.code,repdate:fin_reports.first.fd_repdate,type:TYPE_QUARTER,matrix:q_matrix,matrix_meta:q_matrix_meta
@@ -45,7 +45,12 @@ class FinSummary < ActiveRecord::Base
 
   # 计算最近财报收益增长率uprate > pe的
   def self.stock_good(stock,q_matrix,q_matrix_meta)
-    good = {}
+    # 3个月以前的 手工标记丢掉
+    if stock.good && stock.good["mark_at"] && stock.good["mark_at"] > 3.month.ago.to_date.to_s
+      good = {"mark_at"=>stock.good["mark_at"]}
+    else
+      good = {}
+    end
 
     uprate_vs_pe = nil
     if stock.pe && q_matrix[:up_rate_of_profit][0] && q_matrix[:up_rate_of_profit][1]
@@ -94,8 +99,13 @@ class FinSummary < ActiveRecord::Base
 
   # 计算现金流不行的
   # 经营-，投资+，融资+；经营-，投资+，融资-；经营-，投资-，融资-；
-  def self.stock_bad(q_matrix,q_matrix_meta)
-    bad = {}
+  def self.stock_bad(stock,q_matrix,q_matrix_meta)
+    # 3个月以前的 手工标记丢掉
+    if stock.bad && stock.bad["mark_at"] && stock.bad["mark_at"] > 3.month.ago.to_date.to_s
+      bad = {"mark_at"=>stock.bad["mark_at"]}
+    else
+      bad = {}
+    end
 
     [0,1].each do |idx|
       if q_matrix[:operating_cash][idx] && q_matrix[:invest_cash][idx] && q_matrix[:loan_cash][idx]

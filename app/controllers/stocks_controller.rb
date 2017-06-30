@@ -158,4 +158,16 @@ class StocksController < ApplicationController
       format.json { head :no_content }
     end
   end
+
+  def mark
+    @stock = Stock.find(params[:id])
+    if params[:mark]
+      @stock.mark_good_or_bad! params[:mark]
+    end
+
+    respond_to do |format|
+      format.html {render text:"ok"}
+      format.json { render json: "ok" }
+    end
+  end
 end
