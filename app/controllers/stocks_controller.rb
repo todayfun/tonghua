@@ -31,11 +31,16 @@ class StocksController < ApplicationController
     # 计算年报
     fy_matrix = FinReport.fy_matrix @stock,@fin_reports
     fd_years = fy_matrix[:fd_year].reverse
+
+    weeklines = Weekline.where(code:@stock.code).where("day > '#{2.year.ago}'").order("day asc").select("day,close").all
+    days = weeklines.map {|r| r.day}
+    prices = weeklines.map {|r| r.close}
+
     @fy_chart = {}
     if !fd_years.blank?
       series = []
-      series << ["股价(#{dest_currency})",fy_matrix[:fd_price].reverse]
-      @fy_chart[:price] = highchart_line("年报-股价",fd_years,series)
+      series << ["股价(#{dest_currency})",prices || fy_matrix[:fd_price].reverse]
+      @fy_chart[:price] = highchart_line("年报-股价",days || fd_years,series)
 
       series = []
       series << ["收益增长率",fy_matrix[:up_rate_of_profit].reverse]
@@ -51,11 +56,16 @@ class StocksController < ApplicationController
     # 计算季报
     q_matrix = FinReport.q_matrix @stock,@fin_reports
     q_arr = q_matrix[:fd_repdate].reverse
+
+    daylines = Dayline.where(code:@stock.code).where("day > '#{1.year.ago}'").order("day asc").select("day,close").all
+    days = daylines.map {|r| r.day}
+    prices = daylines.map {|r| r.close}
+
     @q_chart = {}
     if !q_arr.blank?
       series = []
-      series << ["股价(#{dest_currency})",q_matrix[:fd_price].reverse]
-      @q_chart[:price_quarter] = highchart_line("季报-股价",q_arr,series)
+      series << ["股价(#{dest_currency})",prices || q_matrix[:fd_price].reverse]
+      @q_chart[:price_quarter] = highchart_line("季报-股价",days || q_arr,series)
 
       series = []
       series << ["P/E",q_matrix[:pe].reverse]

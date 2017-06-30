@@ -97,16 +97,18 @@ class FinSummary < ActiveRecord::Base
   def self.stock_bad(q_matrix,q_matrix_meta)
     bad = {}
 
-    if q_matrix[:operating_cash][0] && q_matrix[:invest_cash][0] && q_matrix[:loan_cash][0]
-      if q_matrix[:operating_cash][0]<0 && q_matrix[:invest_cash][0]>0
-        bad[:cash_status] = "cash_out_1"
-      elsif q_matrix[:operating_cash][0]<0 && q_matrix[:invest_cash][0]<0 && q_matrix[:loan_cash][0]<0
-        bad[:cash_status] = "cash_out_all"
+    [0,1].each do |idx|
+      if q_matrix[:operating_cash][idx] && q_matrix[:invest_cash][idx] && q_matrix[:loan_cash][idx]
+        if q_matrix[:operating_cash][idx]<0 && q_matrix[:invest_cash][idx]>0
+          bad["cash_status_#{idx}"] = "cash_out_1"
+        elsif q_matrix[:operating_cash][idx]<0 && q_matrix[:invest_cash][idx]<0 && q_matrix[:loan_cash][idx]<0
+          bad["cash_status_#{idx}"] = "cash_out_all"
+        end
       end
-    end
 
-    if q_matrix[:fd_rights_rate][0] && q_matrix[:fd_rights_rate][0] < 0.8
-      bad[:rights_rate] = q_matrix[:fd_rights_rate][0]
+      if q_matrix[:fd_rights_rate][idx] && q_matrix[:fd_rights_rate][idx] < 0.8
+        bad["rights_rate_#{idx}"] = q_matrix[:fd_rights_rate][idx]
+      end
     end
 
     bad
