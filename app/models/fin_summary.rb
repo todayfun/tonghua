@@ -108,6 +108,7 @@ class FinSummary < ActiveRecord::Base
       end
     end
 
+    # 收益率负增长
     down_rate_cnt = 0
     if q_matrix[:up_rate_of_profit][0] && q_matrix[:up_rate_of_profit][0] < 0
       down_rate_cnt += 1
@@ -115,6 +116,14 @@ class FinSummary < ActiveRecord::Base
 
     if down_rate_cnt > 0
       bad["down_rate_cnt"] = down_rate_cnt
+    end
+
+    # 收益增长率远低于PE
+    if stock.pe && q_matrix[:up_rate_of_profit][0] && q_matrix[:up_rate_of_profit][0] > 0
+      if (stock.pe > q_matrix[:up_rate_of_profit][0] * 2)
+        uprate_lower_pe_cnt = 1
+        bad["uprate_lower_pe"] = [q_matrix[:up_rate_of_profit][0],stock.pe]
+      end
     end
 
     bad
