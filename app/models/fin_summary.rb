@@ -83,8 +83,8 @@ class FinSummary < ActiveRecord::Base
 
     # 下跌后反弹
     if stock.pe && q_matrix[:up_rate_of_profit][0] && stock.pe < q_matrix[:up_rate_of_profit][0] * 0.7 && stock.pe < 60
-      rise_cnt,down_cnt = Weekline.down_and_rise_trend stock.code,6
-      good[:rise_after_down] = true if rise_cnt>0 && down_cnt > 3
+      rise_cnt,down_cnt = Weekline.down_and_rise_trend stock.code,7,0.015
+      good[:rise_after_down] = true if rise_cnt>0 && down_cnt > 4
     end
 
     good
@@ -126,8 +126,7 @@ class FinSummary < ActiveRecord::Base
 
     # 收益增长率远低于PE
     if stock.pe && q_matrix[:up_rate_of_profit][0] && q_matrix[:up_rate_of_profit][0] > 0
-      if (stock.pe > q_matrix[:up_rate_of_profit][0] * 1.6)
-        uprate_lower_pe_cnt = 1
+      if (stock.pe > q_matrix[:up_rate_of_profit][0] * 2)
         bad["uprate_lower_pe"] = [q_matrix[:up_rate_of_profit][0],stock.pe]
       end
     end

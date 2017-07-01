@@ -133,7 +133,7 @@ class Weekline < ActiveRecord::Base
   end
 
   # 下跌后反弹
-  def self.down_and_rise_trend(code,cnt)
+  def self.down_and_rise_trend(code,cnt,delta=0)
     deals = Weekline.where("code=\"#{code}\"").select("open,close").order("day desc").limit(cnt+1)
     if deals.size < cnt+1
       return [0,0]
@@ -151,9 +151,11 @@ class Weekline < ActiveRecord::Base
     down_cnt = 0
     deals[rise_cnt...cnt].each_index do |i|
       idx = i + rise_cnt
-      if deals[idx].close <= deals[idx+1].close or (deals[idx].close+deals[idx].open) < (deals[idx+1].close+deals[idx+1].open)
+      if (deals[idx].close <= deals[idx+1].close * (1+delta)) or (deals[idx].close+deals[idx].open) < (deals[idx+1].close+deals[idx+1].open) * (1+delta)
         down_cnt += 1
       else
+        # 如果跌幅不够15%，则忽略
+        down_cnt = 0 unless deals[rise_cnt].close < deals[rise_cnt+down_cnt].close * 0.85
         break
       end
     end
