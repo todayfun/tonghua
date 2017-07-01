@@ -6,7 +6,7 @@ class Monthline < ActiveRecord::Base
     imported_codes = Monthline.where("`day`>\"#{onemonthago_day}\"").select("distinct `code`").map &:code
 
     stocks = Stock.all
-    ignored_codes = Runlog.ignored Runlog::NAME_MONTHLINE,[Runlog::STATUS_DISABLE,Runlog::STATUS_DISABLE],1.month.ago
+    ignored_codes = Runlog.ignored Runlog::NAME_MONTHLINE,[Runlog::STATUS_DISABLE,Runlog::STATUS_IGNORE],1.month.ago
     new_imported = 0
     stocks.each do |stock|
       unless imported_codes.include? stock.code

@@ -3,7 +3,7 @@ class Dayline < ActiveRecord::Base
 
   def self.import
     stocks = Stock.all
-    ignored_codes = Runlog.ignored Runlog::NAME_DAYLINE,[Runlog::STATUS_DISABLE,Runlog::STATUS_DISABLE],1.week.ago
+    ignored_codes = Runlog.ignored Runlog::NAME_DAYLINE,[Runlog::STATUS_DISABLE,Runlog::STATUS_IGNORE],1.day.ago
     new_imported = 0
     stocks.each do |stock|
       begin

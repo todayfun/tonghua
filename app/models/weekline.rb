@@ -10,7 +10,7 @@ class Weekline < ActiveRecord::Base
     imported_codes = Weekline.where("`day`>\"#{oneweekago_day}\"").select("distinct `code`").map &:code
 
     stocks = Stock.all
-    ignored_codes = Runlog.ignored Runlog::NAME_MONTHLINE,[Runlog::STATUS_DISABLE,Runlog::STATUS_DISABLE],1.week.ago
+    ignored_codes = Runlog.ignored Runlog::NAME_WEEKLINE,[Runlog::STATUS_DISABLE,Runlog::STATUS_IGNORE],1.day.ago
 
     new_imported = 0
     stocks.each do |stock|
@@ -105,6 +105,8 @@ class Weekline < ActiveRecord::Base
       rise_cnt+=1 if deals[idx].close > deals[idx+1].close
       break unless flg
     end
+
+    flg &&= deals[0].close > deals[1].close
 
     if rise_cnt==cnt && flg
       return @@RISE_CONTINUE
