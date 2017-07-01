@@ -54,7 +54,7 @@ class FinSummary < ActiveRecord::Base
 
     uprate_vs_pe = nil
     if stock.pe && q_matrix[:up_rate_of_profit][0] && q_matrix[:up_rate_of_profit][1]
-      if (stock.pe < q_matrix[:up_rate_of_profit][0] * 0.7) && q_matrix[:up_rate_of_profit][1] > 15 && q_matrix[:up_rate_of_profit][0]>30 && stock.pe < 60
+      if (stock.pe < q_matrix[:up_rate_of_profit][0] * 0.7) && q_matrix[:up_rate_of_profit][1] > 5 && q_matrix[:up_rate_of_profit][0]>20 && stock.pe < 60
         uprate_vs_pe = (q_matrix[:up_rate_of_profit][0]/stock.pe).round(1)
       end
     end
@@ -77,20 +77,7 @@ class FinSummary < ActiveRecord::Base
       break if cnt>=4
     end
 
-    # 增长率要比较稳定
-    ary = q_matrix[:up_rate_of_profit][0..3].compact
-    flg_up_rate = true
-    unless ary.empty?
-      min = ary.min
-      max = ary.max
-      if min > 5
-
-      else
-        flg_up_rate = false
-      end
-    end
-
-    if uprate_vs_pe && up_cash_cnt>=3 && flg_up_rate
+    if uprate_vs_pe && up_cash_cnt>=3
       good[:uprate_vs_pe] = uprate_vs_pe
     end
 
@@ -107,7 +94,6 @@ class FinSummary < ActiveRecord::Base
       bad = {}
     end
 
-    down_rate_cnt = 0
     [0,1].each do |idx|
       if q_matrix[:operating_cash][idx] && q_matrix[:invest_cash][idx] && q_matrix[:loan_cash][idx]
         if q_matrix[:operating_cash][idx]<0 && q_matrix[:invest_cash][idx]>0
@@ -120,10 +106,11 @@ class FinSummary < ActiveRecord::Base
       if q_matrix[:fd_rights_rate][idx] && q_matrix[:fd_rights_rate][idx] < 0.7
         bad["rights_rate_#{idx}"] = q_matrix[:fd_rights_rate][idx]
       end
+    end
 
-      if q_matrix[:up_rate_of_profit][idx] && q_matrix[:up_rate_of_profit][idx] < 0
-        down_rate_cnt += 1
-      end
+    down_rate_cnt = 0
+    if q_matrix[:up_rate_of_profit][0] && q_matrix[:up_rate_of_profit][0] < 0
+      down_rate_cnt += 1
     end
 
     if down_rate_cnt > 0

@@ -12,8 +12,10 @@ module StocksHelper
       when 1
         "(连续上涨)#{stock.monthrise}"
       when 2
-        "(超跌反弹)#{stock.monthrise}"
+        "(跌后反弹)#{stock.monthrise}"
       when 3
+        "(超跌反弹)#{stock.monthrise}"
+      when 4
         "(反弹上涨)#{stock.monthrise}"
       else
         ""

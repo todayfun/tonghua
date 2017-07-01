@@ -1,9 +1,10 @@
 class Weekline < ActiveRecord::Base
   attr_accessible :close, :code, :day, :high, :low, :open, :vol
 
-  @@RISE_CONTINUE=1
-  @@RISE_OVERSOLD=2
-  @@RISE_REBOUND=3
+  RISE_CONTINUE=1
+  RISE_OVERSOLD=3
+  RISE_REBOUND=4
+  RISE_DOWN_AND_RISE = 2
 
   def self.import
     oneweekago_day = 1.week.ago.beginning_of_week.strftime('%Y-%m-%d')
@@ -95,7 +96,7 @@ class Weekline < ActiveRecord::Base
   def self.rise_trend(code,cnt)
     deals = Weekline.where("code=\"#{code}\"").order("day desc").limit(cnt+1)
     if deals.size < cnt+1
-      return false
+      return 0
     end
 
     flg = true
@@ -109,7 +110,7 @@ class Weekline < ActiveRecord::Base
     flg &&= deals[0].close > deals[1].close
 
     if rise_cnt==cnt && flg
-      return @@RISE_CONTINUE
+      return RISE_CONTINUE
     elsif flg
       # 如果没有连续上涨，则要看回调了多少 或 反弹了多少
       close_arr = Weekline.where(code:code).order("day desc").select(:close).limit(52).map(&:close)
@@ -117,12 +118,45 @@ class Weekline < ActiveRecord::Base
       min_close = close_arr.min
 
       # 反弹的
-      return @@RISE_REBOUND if rise_cnt>(cnt-2)&&(deals[0].close - min_close) > min_close * 0.20
+      return RISE_REBOUND if rise_cnt>(cnt-2)&&(deals[0].close - min_close) > min_close * 0.20
 
       # 超跌的
-      return @@RISE_OVERSOLD if (max_close - deals[0].close) > max_close * 0.3
+      return RISE_OVERSOLD if (max_close - deals[0].close) > max_close * 0.3
+    else
+      # 下跌后反弹
+      rise_cnt,down_cnt = down_and_rise_trend code,6
+      return RISE_DOWN_AND_RISE if rise_cnt>0 && down_cnt > 3
     end
 
     return 0
+  end
+
+  # 下跌后反弹
+  def self.down_and_rise_trend(code,cnt)
+    deals = Weekline.where("code=\"#{code}\"").select("open,close").order("day desc").limit(cnt+1)
+    if deals.size < cnt+1
+      return [0,0]
+    end
+
+    rise_cnt = 0
+    deals[0...cnt].each_index do |idx|
+      if deals[idx].close >= deals[idx+1].close && deals[idx].close>=deals[idx].open
+        rise_cnt += 1
+      else
+        break
+      end
+    end
+
+    down_cnt = 0
+    deals[rise_cnt...cnt].each_index do |i|
+      idx = i + rise_cnt
+      if deals[idx].close <= deals[idx+1].close
+        down_cnt += 1
+      else
+        break
+      end
+    end
+
+    return [rise_cnt,down_cnt]
   end
 end

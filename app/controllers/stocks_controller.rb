@@ -57,7 +57,7 @@ class StocksController < ApplicationController
     q_matrix = FinReport.q_matrix @stock,@fin_reports
     q_arr = q_matrix[:fd_repdate].reverse
 
-    daylines = Dayline.where(code:@stock.code).where("day > '#{1.year.ago}'").order("day asc").select("day,close").all
+    daylines = Weekline.where(code:@stock.code).where("day > '#{1.year.ago}'").order("day asc").select("day,close").all
     days = daylines.map {|r| r.day}
     prices = daylines.map {|r| r.close}
 
