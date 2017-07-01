@@ -429,7 +429,7 @@ class FinReport < ActiveRecord::Base
   end
 
   # 计算年报数据
-  def self.fy_summary stock,fin_reports
+  def self.fy_summary(stock,fin_reports)
     dest_currency = stock.stamp=='us' ? FinReport::CURRENCY_USD : FinReport::CURRENCY_HKD
     currency = nil
 
@@ -544,6 +544,21 @@ class FinReport < ActiveRecord::Base
            end
       q_matrix[:pe] << pe
       q_matrix_meta[:pe][uk] = pe
+    end
+
+    trim_cnt = 0
+    q_matrix[:sum_profit_of_lastyear].each_index do |i|
+      if q_matrix[:sum_profit_of_lastyear][-(i+1)].nil?
+        trim_cnt += 1
+      else
+        break
+      end
+    end
+
+    if trim_cnt>0
+      q_matrix.each_key do |key|
+        q_matrix[key] = q_matrix[key][0...-(trim_cnt+1)]
+      end
     end
 
     [q_matrix,q_matrix_meta]

@@ -151,7 +151,7 @@ class Weekline < ActiveRecord::Base
     down_cnt = 0
     deals[rise_cnt...cnt].each_index do |i|
       idx = i + rise_cnt
-      if deals[idx].close <= deals[idx+1].close
+      if deals[idx].close <= deals[idx+1].close or (deals[idx].close+deals[idx].open) < (deals[idx+1].close+deals[idx+1].open)
         down_cnt += 1
       else
         break
