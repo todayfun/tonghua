@@ -235,7 +235,7 @@ rsp.body:
       bad.delete "mark_at"
 
       self.good = good
-      self.bad = bad
+      self.bad = {}
       self.save
     elsif mark == "bad"
       bad["mark_at"] = Date.today.to_s

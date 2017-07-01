@@ -107,6 +107,7 @@ class FinSummary < ActiveRecord::Base
       bad = {}
     end
 
+    down_rate_cnt = 0
     [0,1].each do |idx|
       if q_matrix[:operating_cash][idx] && q_matrix[:invest_cash][idx] && q_matrix[:loan_cash][idx]
         if q_matrix[:operating_cash][idx]<0 && q_matrix[:invest_cash][idx]>0
@@ -116,9 +117,17 @@ class FinSummary < ActiveRecord::Base
         end
       end
 
-      if q_matrix[:fd_rights_rate][idx] && q_matrix[:fd_rights_rate][idx] < 0.8
+      if q_matrix[:fd_rights_rate][idx] && q_matrix[:fd_rights_rate][idx] < 0.7
         bad["rights_rate_#{idx}"] = q_matrix[:fd_rights_rate][idx]
       end
+
+      if q_matrix[:up_rate_of_profit][idx] && q_matrix[:up_rate_of_profit][idx] < 0
+        down_rate_cnt += 1
+      end
+    end
+
+    if down_rate_cnt > 0
+      bad["down_rate_cnt"] = down_rate_cnt
     end
 
     bad

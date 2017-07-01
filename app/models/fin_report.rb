@@ -533,7 +533,7 @@ class FinReport < ActiveRecord::Base
           else
             nil
           end
-      q_matrix[:sum_profit_of_lastyear] << currency_translate(v,currency,dest_currency)
+      q_matrix[:sum_profit_of_lastyear] << v
       q_matrix_meta[:sum_profit_of_lastyear][uk] = q_matrix[:sum_profit_of_lastyear].last
 
       # calc pe
