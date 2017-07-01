@@ -2,7 +2,7 @@ class Monthline < ActiveRecord::Base
   attr_accessible :close, :code, :day, :high, :low, :open, :vol
 
   def self.import
-    onemonthago_day = 1.month.ago.beginning_of_month.strftime('%Y-%m-%d')
+    onemonthago_day = Time.now.beginning_of_month.strftime('%Y-%m-%d')
     imported_codes = Monthline.where("`day`>\"#{onemonthago_day}\"").select("distinct `code`").map &:code
 
     stocks = Stock.all
@@ -73,9 +73,9 @@ class Monthline < ActiveRecord::Base
 
     return Runlog::STATUS_IGNORE if lastoneyear_deals.blank?
 
-    if lastoneyear_deals.first[0] > Time.now.beginning_of_month.strftime('%Y-%m-%d')
-      lastoneyear_deals.shift
-    end
+    # 第一条记录很可能不是月K
+    obj = Monthline.where(code:code).order("day desc").first
+    obj.delete if obj
 
     Monthline.transaction do
       lastoneyear_deals.each do |r|
@@ -83,6 +83,7 @@ class Monthline < ActiveRecord::Base
           Monthline.create code:code,day:r[0],open:r[1],close:r[2],high:r[3],low:r[4],vol:r[5]
             # catch SQLite3::ConstraintException: UNIQUE constraint failed
         rescue ActiveRecord::StatementInvalid
+          break
         end
       end
     end

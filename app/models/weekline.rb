@@ -7,7 +7,7 @@ class Weekline < ActiveRecord::Base
   RISE_DOWN_AND_RISE = 2
 
   def self.import
-    oneweekago_day = 1.week.ago.beginning_of_week.strftime('%Y-%m-%d')
+    oneweekago_day = Time.now.beginning_of_week.strftime('%Y-%m-%d')
     imported_codes = Weekline.where("`day`>\"#{oneweekago_day}\"").select("distinct `code`").map &:code
 
     stocks = Stock.all
@@ -76,9 +76,9 @@ class Weekline < ActiveRecord::Base
       end
     end
 
-    if lastoneyear_deals.first[0] > Time.now.beginning_of_week.strftime('%Y-%m-%d')
-      lastoneyear_deals.shift
-    end
+    # 第一条记录很可能不是周K
+    obj = Weekline.where(code:code).order("day desc").first
+    obj.delete if obj
 
     Weekline.transaction do
       lastoneyear_deals.each do |r|
@@ -86,6 +86,7 @@ class Weekline < ActiveRecord::Base
         Weekline.create code:code,day:r[0],open:r[1],close:r[2],high:r[3],low:r[4],vol:r[5]
           # catch SQLite3::ConstraintException: UNIQUE constraint failed
         rescue ActiveRecord::StatementInvalid
+          break
         end
       end
     end
