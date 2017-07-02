@@ -39,8 +39,8 @@ class StocksController < ApplicationController
     @fy_chart = {}
     if !fd_years.blank?
       series = []
-      series << ["股价(#{dest_currency})",prices || fy_matrix[:fd_price].reverse]
-      @fy_chart[:price] = highchart_line("年报-股价",days || fd_years,series)
+      #series << ["股价(#{dest_currency})",prices || fy_matrix[:fd_price].reverse]
+      #@fy_chart[:price] = highchart_line("年报-股价",days || fd_years,series)
 
       series = []
       series << ["收益增长率",fy_matrix[:up_rate_of_profit].reverse]
@@ -81,12 +81,12 @@ class StocksController < ApplicationController
       series << ["现金净额(#{dest_currency})",q_matrix[:fd_cash_base_share].reverse]
       series << ["投资活动净额(#{dest_currency})",q_matrix[:invest_cash].reverse]
       series << ["融资活动净额(#{dest_currency})",q_matrix[:loan_cash].reverse]
-      @q_chart[:cash_invest_base_share] = highchart_line("季报-每股投融资现金流",q_arr,series)
+      @fy_chart[:cash_invest_base_share] = highchart_line("季报-每股投融资现金流",q_arr,series)
 
       series = []
       series << ["股东权益占比",q_matrix[:fd_rights_rate].reverse]
       series << ["流动负债/资产",q_matrix[:fd_debt_rate].reverse]
-      @q_chart[:debt_rate] = highchart_line("季报-权益债务",q_arr,series)
+      @fy_chart[:debt_rate] = highchart_line("季报-权益债务",q_arr,series)
     end
 
     respond_to do |format|
