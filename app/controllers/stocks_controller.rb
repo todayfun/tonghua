@@ -69,16 +69,16 @@ class StocksController < ApplicationController
       @q_chart[:pe_of_lastyear] = highchart_line("季报-PE",q_arr,series)
 
       series = []
-      series << ["每股收益累计(#{dest_currency})",q_matrix[:fd_profit_base_share].reverse]
+      #series << ["每股收益累计(#{dest_currency})",q_matrix[:fd_profit_base_share].reverse]
       series << ["最近4季度收益(#{dest_currency})",q_matrix[:sum_profit_of_lastyear].reverse]
       @q_chart[:profit_base_share] = highchart_line("季报-每股收益",q_arr,series)
 
       series = []
       series << ["经营活动净额(#{dest_currency})",q_matrix[:operating_cash].reverse]
-      series << ["现金净额(#{dest_currency})",q_matrix[:fd_cash_base_share].reverse]
       @q_chart[:cash_base_share] = highchart_line("季报-每股现金流",q_arr,series)
 
       series = []
+      series << ["现金净额(#{dest_currency})",q_matrix[:fd_cash_base_share].reverse]
       series << ["投资活动净额(#{dest_currency})",q_matrix[:invest_cash].reverse]
       series << ["融资活动净额(#{dest_currency})",q_matrix[:loan_cash].reverse]
       @q_chart[:cash_invest_base_share] = highchart_line("季报-每股投融资现金流",q_arr,series)

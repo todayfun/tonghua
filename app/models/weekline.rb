@@ -77,8 +77,8 @@ class Weekline < ActiveRecord::Base
     end
 
     # 第一条记录很可能不是周K
-    obj = Weekline.where(code:code).order("day desc").first
-    obj.delete if obj
+    objs = Weekline.where(code:code).order("day desc").limit(2)
+    objs.each {|obj| obj.delete}
 
     Weekline.transaction do
       lastoneyear_deals.each do |r|
