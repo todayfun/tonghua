@@ -51,7 +51,7 @@ class Dayline < ActiveRecord::Base
       return Runlog::STATUS_DISABLE
     end
 
-    puts "import dayline #{code}"
+    puts "import dayline #{code} from #{begin_date} to #{end_date}"
     rsp = Net::HTTP.get(URI.parse(url))
 
     parsed_json = ActiveSupport::JSON.decode(rsp)["data"]
