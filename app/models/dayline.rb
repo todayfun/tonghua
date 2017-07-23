@@ -9,7 +9,7 @@ class Dayline < ActiveRecord::Base
       begin
         next if ignored_codes.include?(stock.code)
         lastest_day = Dayline.where(code:stock.code).select("day").order("day desc").limit(1).first.try :day
-        lastest_day = Date.parse("2010-01-01")
+        lastest_day ||= Date.parse("2010-01-01")
 
         end_date = Date.today.end_of_year
         begin_date = (lastest_day.year==end_date.year) ? lastest_day : end_date.beginning_of_year
