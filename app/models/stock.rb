@@ -16,6 +16,7 @@ class Stock < ActiveRecord::Base
 
   def self.import_summary_one(stock)
     url = "http://web.ifzq.gtimg.cn/portable/mobile/qt/data?code=#{stock.code}"
+    puts "import stock summary of #{stock.code}"
     rsp = Net::HTTP.get(URI.parse(url))
     json = ActiveSupport::JSON.decode(rsp)
     data = json["data"]
@@ -29,7 +30,7 @@ class Stock < ActiveRecord::Base
     stock.update_attributes gb:gb,sz:sz,low52w:data["52wl"],high52w:data["52wh"],price:data["newpri"],pe:data["pe"]
   end
 
-  def self.rise_trend(weekcnt=4,monthcnt=24)
+  def self.rise_trend(weekcnt=2,monthcnt=24)
     stocks = Stock.all
 
     stocks.each do |s|
@@ -122,7 +123,7 @@ class Stock < ActiveRecord::Base
     import_summary_one stock
     Weekline.import_weekline stock.code,stock.stamp
     Monthline.import_monthline stock.code,stock.stamp
-    rise_trend_one stock,4,24
+    rise_trend_one stock,2,24
     FinReport.import_finRpt_one stock
 
     true
