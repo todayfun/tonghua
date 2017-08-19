@@ -4,7 +4,6 @@
   <tr>
     <th>Code</th>
     <th>Name</th>
-    <th>股价</th>
     <th>增长_VS_PE</th>
   </tr>
 
@@ -12,8 +11,7 @@
   <tr>
     <td><%= link_to "#{stock.code}#{riselabel(stock)}", stockurl(stock.code,stock.stamp), :target=>'_blank' %></td>
     <td><%= truncate(stock.name, length:12)  %></td>
-    <td><%= stock.price %></td>
-    <td><%= stock.good.to_json %></td>
+    <td><%= (stock.good||{}).map{|k,v| "#{k}:#{v}"}.join("<br/>").html_safe %></td>
     <td><%= link_to "本地图表", stock%></td>
     <td><%= link_to "同花顺图表", link_to_tonghuashun_finance(stock), :target=>'_blank'%></td>
   </tr>

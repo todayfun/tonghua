@@ -38,7 +38,7 @@ class FinReport < ActiveRecord::Base
 
   def self.import_finRpt
     stocks = Stock.all
-    ignored_codes = Runlog.ignored Runlog::NAME_FINRPT,[Runlog::STATUS_DISABLE,Runlog::STATUS_DISABLE],1.week.ago
+    ignored_codes = Runlog.ignored Runlog::NAME_FINRPT,[Runlog::STATUS_DISABLE,Runlog::STATUS_DISABLE],1.day.ago
     stocks.each do |stock|
       begin
         next if ignored_codes.include?(stock.code)
