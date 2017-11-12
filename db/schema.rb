@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20170625123510) do
+ActiveRecord::Schema.define(:version => 20171112153641) do
 
   create_table "daylines", :force => true do |t|
     t.string   "code"
@@ -50,10 +50,12 @@ ActiveRecord::Schema.define(:version => 20170625123510) do
     t.float    "operating_cash"
     t.float    "invest_cash"
     t.float    "loan_cash"
+    t.float    "profit_of_holderright"
   end
 
   add_index "fin_reports", ["fd_code", "fd_year", "fd_type"], :name => "index_fin_reports_on_fd_code_and_fd_year_and_fd_type", :unique => true
   add_index "fin_reports", ["fd_code"], :name => "index_fin_reports_on_fd_code"
+  add_index "fin_reports", ["profit_of_holderright"], :name => "index_fin_reports_on_profit_of_holderright"
 
   create_table "fin_summaries", :force => true do |t|
     t.string   "code"

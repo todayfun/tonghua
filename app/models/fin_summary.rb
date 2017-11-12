@@ -116,13 +116,28 @@ class FinSummary < ActiveRecord::Base
 
     # 收益率负增长
     down_rate_cnt = 0
-    if q_matrix[:up_rate_of_profit][0] && q_matrix[:up_rate_of_profit][0] < 0
+    [0,2].each do |i|
+    if q_matrix[:up_rate_of_profit][i] && q_matrix[:up_rate_of_profit][i] < 0
       down_rate_cnt += 1
     end
+    end
 
-    if down_rate_cnt > 0
+    if down_rate_cnt >= 2
       bad["down_rate_cnt"] = down_rate_cnt
     end
+
+    # 股东权益回报率低
+    low_RoE_cnt = 0
+    [0,2].each do |i|
+      if q_matrix[:profit_of_holderright][i] && q_matrix[:profit_of_holderright][i] < 12
+        low_RoE_cnt += 1
+      end
+    end
+
+    if low_RoE_cnt >= 2
+      bad["low_RoE_cnt"] = low_RoE_cnt
+    end
+
 
     # 收益增长率远低于PE
     if stock.pe && q_matrix[:up_rate_of_profit][0] && q_matrix[:up_rate_of_profit][0] > 0

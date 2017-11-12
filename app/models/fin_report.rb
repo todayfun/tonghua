@@ -17,6 +17,7 @@ class FinReport < ActiveRecord::Base
                   :operating_cash, # 经营活动现金流量净额
                   :invest_cash, # 投资活动现金流量净额
                   :loan_cash # 筹资活动现金流量净额
+                  :profit_of_holderright # 股东权益回报率
 
   TYPE_Q1 = 4
   TYPE_Q2 = 3
@@ -49,6 +50,18 @@ class FinReport < ActiveRecord::Base
         puts "import_finRpt exception for #{stock.code}: #{err}"
       end
     end
+  end
+
+  # 计算股东权益回报率
+  def self.calc_profit_of_holderright
+    fin_reports  = FinReport.where("profit_of_holderright is null and fd_stkholder_rights is not null and fd_profit_base_share")
+                       .joins("join stocks on stocks.code = fin_reports.fd_code and (stocks.gb is not null and stocks.gb > 0)")
+                       .select("fin_reports.*,stocks.gb as gb")
+    fin_reports.each do |rpt|
+      rpt.profit_of_holderright = (rpt.fd_profit_base_share * rpt.gb * 100 / (rpt.fd_stkholder_rights*FinReport::FIN_RPT_UNIT)).round(2)
+      rpt.save
+    end
+
   end
 
   def self.import_finRpt_one(stock)
@@ -435,7 +448,7 @@ class FinReport < ActiveRecord::Base
 
     # 计算年报
     fy_matrix = {fd_year:[],fd_price:[],fd_profit_base_share:[],fd_cash_base_share:[],fd_debt_rate:[],fd_virtual_profit_base_share:[],
-                 pe:[],up_rate_of_profit:[],operating_cash:[],invest_cash:[],loan_cash:[]}
+                 pe:[],up_rate_of_profit:[],operating_cash:[],invest_cash:[],loan_cash:[],profit_of_holderright:[]}
 
     fy_matrix_meta = {idx:[],profit_base_share:{},operating_cash:{},pe:{},up_rate_of_profit:{},price:{}}
     fin_reports.each do |r|
@@ -450,6 +463,7 @@ class FinReport < ActiveRecord::Base
       fy_matrix[:operating_cash] << currency_translate(cash_base_share(stock.gb,r.operating_cash),currency,dest_currency)
       fy_matrix[:invest_cash] << currency_translate(cash_base_share(stock.gb,r.invest_cash),currency,dest_currency)
       fy_matrix[:loan_cash] << currency_translate(cash_base_share(stock.gb,r.loan_cash),currency,dest_currency)
+      fy_matrix[:profit_of_holderright] << r.profit_of_holderright
 
       uk = "#{r.fd_year},#{r.fd_type}"
       fy_matrix_meta[:price][uk] = fy_matrix[:fd_price].last
@@ -490,7 +504,7 @@ class FinReport < ActiveRecord::Base
     currency = nil
 
     q_matrix = {fd_repdate:[],fd_price:[],fd_profit_base_share:[],fd_cash_base_share:[],fd_debt_rate:[],fd_rights_rate:[],
-                operating_cash:[],invest_cash:[],loan_cash:[],up_rate_of_profit:[],sum_profit_of_lastyear:[],pe:[]}
+                operating_cash:[],invest_cash:[],loan_cash:[],up_rate_of_profit:[],sum_profit_of_lastyear:[],pe:[],profit_of_holderright:[]}
     cnt = 0
     q_matrix_meta = {idx:[],profit_base_share:{},operating_cash:{},pe:{},up_rate_of_profit:{},sum_profit_of_lastyear:{},price:{}}
     fin_reports.each do |r|
@@ -504,6 +518,7 @@ class FinReport < ActiveRecord::Base
       q_matrix[:operating_cash] << currency_translate(cash_base_share(stock.gb,r.operating_cash),currency,dest_currency)
       q_matrix[:invest_cash] << currency_translate(cash_base_share(stock.gb,r.invest_cash),currency,dest_currency)
       q_matrix[:loan_cash] << currency_translate(cash_base_share(stock.gb,r.loan_cash),currency,dest_currency)
+      q_matrix[:profit_of_holderright] << r.profit_of_holderright
 
       uk = "#{r.fd_year},#{r.fd_type}"
       q_matrix_meta[:price][uk] = q_matrix[:fd_price].last
