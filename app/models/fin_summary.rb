@@ -81,6 +81,24 @@ class FinSummary < ActiveRecord::Base
       good[:uprate_vs_pe] = uprate_vs_pe
     end
 
+    # 股东权益回报率很高
+    high_RoE_cnt = 0
+    roe = q_matrix[:profit_of_holderright].compact()[0,5]
+    unless roe.empty?
+      avg_roe = roe.sum / roe.count
+
+      roe.each_with_index do |v,i|
+        if v > 15
+          high_RoE_cnt += 1
+        end
+        break if i==2
+      end
+
+      if high_RoE_cnt >= 2 && avg_roe > 12 && roe[0]>12
+        good["avg_RoE"] = avg_roe.round(1)
+      end
+    end
+
     # 下跌后反弹
     if stock.pe && q_matrix[:up_rate_of_profit][0] && stock.pe < q_matrix[:up_rate_of_profit][0] * 0.7 && stock.pe < 60
       rise_cnt,down_cnt = Weekline.down_and_rise_trend stock.code,7,0.015
@@ -126,16 +144,22 @@ class FinSummary < ActiveRecord::Base
       bad["down_rate_cnt"] = down_rate_cnt
     end
 
-    # 股东权益回报率低
+    # 股东权益回报率 平均不能太低
     low_RoE_cnt = 0
-    [0,2].each do |i|
-      if q_matrix[:profit_of_holderright][i] && q_matrix[:profit_of_holderright][i] < 12
-        low_RoE_cnt += 1
-      end
-    end
+    roe = q_matrix[:profit_of_holderright].compact()[0,5]
+    unless roe.empty?
+      avg_roe = roe.sum / roe.count
 
-    if low_RoE_cnt >= 2
-      bad["low_RoE_cnt"] = low_RoE_cnt
+      roe.each_with_index do |v,i|
+        if v < 3
+          low_RoE_cnt += 1
+        end
+        break if i==2
+      end
+
+      if low_RoE_cnt >= 2 || avg_roe < 6
+        bad["low_RoE_cnt"] = low_RoE_cnt
+      end
     end
 
 
