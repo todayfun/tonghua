@@ -154,10 +154,10 @@ class FinSummary < ActiveRecord::Base
         if v < 3
           low_RoE_cnt += 1
         end
-        break if i==2
+        break if i==3
       end
 
-      if low_RoE_cnt >= 2 || avg_roe < 6
+      if low_RoE_cnt >= 2 || avg_roe < 5
         bad["low_RoE_cnt"] = low_RoE_cnt
       end
     end
