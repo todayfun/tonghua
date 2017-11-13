@@ -125,6 +125,7 @@ class Stock < ActiveRecord::Base
     Monthline.import_monthline stock.code,stock.stamp
     rise_trend_one stock,2,24
     FinReport.import_finRpt_one stock
+    FinReport.calc_profit_of_holderright stock.code
 
     true
   end

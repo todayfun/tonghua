@@ -21,8 +21,15 @@ class StocksController < ApplicationController
       @stock = Stock.find(params[:id])
     end
 
+    if @stock && @stock.name.blank? && !params[:name].blank?
+      @stock.name = params[:name].strip
+      @stock.save
+    end
+
+    code = @stock.try(:code) || params[:code]
     if params[:refresh]
-      Stock.refresh_one @stock.code
+      Stock.refresh_one code
+      @stock = Stock.where("code='#{code}' or gpcode='#{code}'").first
     end
 
     @fin_reports = FinReport.where(fd_code:@stock.code).order("fd_repdate desc").all
@@ -76,6 +83,10 @@ class StocksController < ApplicationController
       series = []
       series << ["经营活动净额(#{dest_currency})",q_matrix[:operating_cash].reverse]
       @q_chart[:cash_base_share] = highchart_line("季报-每股现金流",q_arr,series)
+
+      series = []
+      series << ["权益回报率",q_matrix[:profit_of_holderright].reverse]
+      @fy_chart[:profit_of_holderright] = highchart_line("季报-股东权益回报率%",q_arr,series)
 
       series = []
       series << ["现金净额(#{dest_currency})",q_matrix[:fd_cash_base_share].reverse]

@@ -12,12 +12,13 @@ module ApplicationHelper
     end
   end
 
-  def highchart_line(title,categories,series,min=nil)
+  def highchart_line(title,categories,series,min=nil,max=nil)
     chart = LazyHighCharts::HighChart.new('graph') do |f|
       f.title(text: title)
       f.chart(width:"650",height:"300")
       f.xAxis(categories: categories)
       f.yAxis(min:min) if min
+      f.yAxis(max:max) if max
       f.legend(layout:"vertical",align:"right",verticalAlign:"middle")
 
       series.each do |name,data|
