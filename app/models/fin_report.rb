@@ -16,8 +16,9 @@ class FinReport < ActiveRecord::Base
                   :currency, # 财报中的货币
                   :operating_cash, # 经营活动现金流量净额
                   :invest_cash, # 投资活动现金流量净额
-                  :loan_cash # 筹资活动现金流量净额
-                  :profit_of_holderright # 股东权益回报率
+                  :loan_cash, # 筹资活动现金流量净额
+                  :profit_of_holderright, # 股东权益回报率
+                  :profit # 净利润
 
   TYPE_Q1 = 4
   TYPE_Q2 = 3
@@ -54,14 +55,19 @@ class FinReport < ActiveRecord::Base
 
   # 计算股东权益回报率
   def self.calc_profit_of_holderright
-    fin_reports  = FinReport.where("profit_of_holderright is null and fd_stkholder_rights is not null and fd_profit_base_share")
-                       .joins("join stocks on stocks.code = fin_reports.fd_code and (stocks.gb is not null and stocks.gb > 0)")
-                       .select("fin_reports.*,stocks.gb as gb")
+    # fin_reports = FinReport.where("profit_of_holderright is null and fd_stkholder_rights is not null and fd_profit_base_share")
+    #                    .joins("join stocks on stocks.code = fin_reports.fd_code and (stocks.gb is not null and stocks.gb > 0)")
+    #                    .select("fin_reports.*,stocks.gb as gb")
+    # fin_reports.each do |rpt|
+    #   rpt.profit_of_holderright = (rpt.fd_profit_base_share * rpt.gb * 100 / (rpt.fd_stkholder_rights*FinReport::FIN_RPT_UNIT)).round(2)
+    #   rpt.save
+    # end
+
+    fin_reports = FinReport.where("fd_stkholder_rights is not null and profit is not null")
     fin_reports.each do |rpt|
-      rpt.profit_of_holderright = (rpt.fd_profit_base_share * rpt.gb * 100 / (rpt.fd_stkholder_rights*FinReport::FIN_RPT_UNIT)).round(2)
+      rpt.profit_of_holderright = (rpt.profit * 100 / (rpt.fd_stkholder_rights)).round(2)
       rpt.save
     end
-
   end
 
   def self.import_finRpt_one(stock)
@@ -314,7 +320,7 @@ class FinReport < ActiveRecord::Base
     keyindex_row_title = keyindex_json["title"][1..-1].map do |arr|
       arr[0].strip
     end
-    keyindex_row_label = {fd_profit_base_share:"基本每股收益",fd_profit_after_share:"稀释每股收益"}
+    keyindex_row_label = {fd_profit_base_share:"基本每股收益",fd_profit_after_share:"稀释每股收益",profit:"净利润"}
 
     debt_row_title = debt_json["title"][1..-1].map do |arr|
       arr[0].strip
