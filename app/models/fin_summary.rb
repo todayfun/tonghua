@@ -26,9 +26,10 @@ class FinSummary < ActiveRecord::Base
 
     puts "import finSummary of quarter: #{stock.code}"
     q_matrix,q_matrix_meta = FinReport.q_summary stock,fin_reports
+    fy_matrix,fy_matrix_meta = FinReport.fy_summary stock,fin_reports
 
-    good = stock_good(stock,q_matrix,q_matrix_meta)
-    bad = stock_bad(stock,q_matrix,q_matrix_meta)
+    good = stock_good(stock,q_matrix,q_matrix_meta,fy_matrix)
+    bad = stock_bad(stock,q_matrix,q_matrix_meta,fy_matrix)
     stock.update_attributes good:good,bad:bad
 
     #FinSummary.create code:stock.code,repdate:fin_reports.first.fd_repdate,type:TYPE_QUARTER,matrix:q_matrix,matrix_meta:q_matrix_meta
@@ -44,7 +45,7 @@ class FinSummary < ActiveRecord::Base
   end
 
   # 计算最近财报收益增长率uprate > pe的
-  def self.stock_good(stock,q_matrix,q_matrix_meta)
+  def self.stock_good(stock,q_matrix,q_matrix_meta,fy_matrix)
     # 3个月以前的 手工标记丢掉
     if stock.good && stock.good["mark_at"] && stock.good["mark_at"] > 3.month.ago.to_date.to_s
       good = {"mark_at"=>stock.good["mark_at"]}
@@ -81,28 +82,29 @@ class FinSummary < ActiveRecord::Base
       good[:uprate_vs_pe] = uprate_vs_pe
     end
 
-    # 股东权益回报率很高
-    high_RoE_cnt = 0
-    roe = q_matrix[:profit_of_holderright].compact()[0,5]
-    unless roe.empty?
-      avg_roe = roe.sum / roe.count
-
-      roe.each_with_index do |v,i|
-        if v > 15
-          high_RoE_cnt += 1
-        end
-        break if i==2
-      end
-
-      if high_RoE_cnt >= 2 && avg_roe > 12 && roe[0]>12
-        good["avg_RoE"] = avg_roe.round(1)
-      end
-    end
-
     # 下跌后反弹
     if stock.pe && q_matrix[:up_rate_of_profit][0] && stock.pe < q_matrix[:up_rate_of_profit][0] * 0.7 && stock.pe < 60
       rise_cnt,down_cnt = Weekline.down_and_rise_trend stock.code,7,0.015
       good[:rise_after_down] = true if rise_cnt>0 && down_cnt > 4
+    end
+
+    # 股东权益回报率很高
+    high_RoE_cnt = 0
+    roe = fy_matrix[:profit_of_holderright].compact()[0,3]
+    unless roe.empty?
+      avg_roe = roe.sum / roe.count
+
+      roe.each_with_index do |v,i|
+        if v > 18
+          high_RoE_cnt += 1
+        end
+      end
+
+      if high_RoE_cnt >= 2 && avg_roe > 15 && roe[0]>15 && q_matrix[:up_rate_of_profit][0] && q_matrix[:up_rate_of_profit][0]>10
+        good["avg_RoE"] = avg_roe.round(1)
+      elsif !good.empty?
+        good["avg_RoE"] = avg_roe.round(1)
+      end
     end
 
     good
@@ -110,7 +112,7 @@ class FinSummary < ActiveRecord::Base
 
   # 计算现金流不行的
   # 经营-，投资+，融资+；经营-，投资+，融资-；经营-，投资-，融资-；
-  def self.stock_bad(stock,q_matrix,q_matrix_meta)
+  def self.stock_bad(stock,q_matrix,q_matrix_meta,fy_matrix)
     # 3个月以前的 手工标记丢掉
     if stock.bad && stock.bad["mark_at"] && stock.bad["mark_at"] > 3.month.ago.to_date.to_s
       bad = {"mark_at"=>stock.bad["mark_at"]}
@@ -146,18 +148,17 @@ class FinSummary < ActiveRecord::Base
 
     # 股东权益回报率 平均不能太低
     low_RoE_cnt = 0
-    roe = q_matrix[:profit_of_holderright].compact()[0,5]
+    roe = fy_matrix[:profit_of_holderright].compact()[0,3]
     unless roe.empty?
       avg_roe = roe.sum / roe.count
 
       roe.each_with_index do |v,i|
-        if v < 3
+        if v < 5
           low_RoE_cnt += 1
         end
-        break if i==3
       end
 
-      if low_RoE_cnt >= 2 || avg_roe < 5
+      if low_RoE_cnt >= 2 || avg_roe < 8
         bad["low_RoE_cnt"] = low_RoE_cnt
       end
     end

@@ -10,13 +10,13 @@ module StocksHelper
   def riselabel(stock)
     case stock.weekrise
       when 1
-        "(连续上涨)#{stock.monthrise}"
+        "(连续上涨)#{stock.weekrise}"
       when 2
-        "(跌后反弹)#{stock.monthrise}"
+        "(跌后反弹)#{stock.weekrise}"
       when 3
-        "(超跌反弹)#{stock.monthrise}"
+        "(超跌反弹)#{stock.weekrise}"
       when 4
-        "(反弹上涨)#{stock.monthrise}"
+        "(反弹上涨)#{stock.weekrise}"
       else
         ""
     end
