@@ -11,6 +11,7 @@
   <%= link_to "顶", {action:"mark",id:@stock.id,mark:"good"}, :remote=>true %>
   <%= link_to "踩", {action:"mark",id:@stock.id,mark:"bad"}, :remote=>true %>
   <%= link_to "clear", {action:"mark",id:@stock.id,mark:"clear"}, :remote=>true %>
+  <%= @stock.good %>
 
   <table>
     <tr>

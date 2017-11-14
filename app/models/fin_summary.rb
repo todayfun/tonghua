@@ -129,7 +129,7 @@ class FinSummary < ActiveRecord::Base
         end
       end
 
-      if q_matrix[:fd_rights_rate][idx] && q_matrix[:fd_rights_rate][idx] < 0.7
+      if q_matrix[:fd_rights_rate][idx] && q_matrix[:fd_rights_rate][idx] < 0.65
         bad["rights_rate_#{idx}"] = q_matrix[:fd_rights_rate][idx]
       end
     end
