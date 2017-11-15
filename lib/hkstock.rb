@@ -11,7 +11,7 @@ class Hkstock
     @@STR.scan(regexp).each do |m|
       stocks << [m[0],m[1].strip] if m && m[0] && m[1]
     end
-    
+
     puts stocks.inspect
   end
 
