@@ -64,7 +64,7 @@ class FinReport < ActiveRecord::Base
     # end
 
     fin_reports = FinReport.where("fd_stkholder_rights is not null and profit is not null")
-    fin_reports = fin_reports.where(fd_code:code) unless code
+    fin_reports = fin_reports.where(fd_code:code) if code
     fin_reports.each do |rpt|
       rpt.profit_of_holderright = (rpt.profit * 100 / (rpt.fd_stkholder_rights)).round(2)
       rpt.save
