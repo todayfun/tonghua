@@ -101,7 +101,7 @@ class FinSummary < ActiveRecord::Base
       end
 
       if high_RoE_cnt >= 2 && avg_roe > 15 && roe[0]>15 && q_matrix[:up_rate_of_profit][0] && q_matrix[:up_rate_of_profit][0]>10
-        good["avg_RoE"] = avg_roe.round(1)
+        good["high_RoE"] = avg_roe.round(1)
       elsif !good.empty?
         good["avg_RoE"] = avg_roe.round(1)
       end

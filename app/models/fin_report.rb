@@ -38,6 +38,8 @@ class FinReport < ActiveRecord::Base
   HKD2USD_RATE = 0.1282
   USD2HKD_RATE = 7.7999
 
+  @@import_failed = {}
+
   def self.import_finRpt
     stocks = Stock.all
     ignored_codes = Runlog.ignored Runlog::NAME_FINRPT,[Runlog::STATUS_DISABLE,Runlog::STATUS_DISABLE],1.day.ago
@@ -51,6 +53,9 @@ class FinReport < ActiveRecord::Base
         puts "import_finRpt exception for #{stock.code}: #{err}"
       end
     end
+
+    puts "\n\n==import complete: #{@@import_failed.size} stock failed:"
+    puts @@import_failed.inspect
   end
 
   # 计算股东权益回报率
@@ -308,6 +313,8 @@ class FinReport < ActiveRecord::Base
         when 12
           fd_type = TYPE_ANNUAL
         else
+          @@import_failed[stock.code] ||= []
+          @@import_failed[stock.code] << fd_repdate.to_s if @@import_failed[stock.code].size < 4
           puts "invalid repdate of #{stock.code}: #{fd_repdate}"
           next
       end
