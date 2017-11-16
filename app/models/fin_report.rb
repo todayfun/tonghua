@@ -197,12 +197,18 @@ class FinReport < ActiveRecord::Base
       elsif fd_year_msg.end_with? "年报"
         fd_type = FinReport::TYPE_ANNUAL
       else
+        @@import_failed[stock.code] ||= []
+        @@import_failed[stock.code] << fd_repdate.to_s if @@import_failed[stock.code].size < 4
         next
       end
 
       fd_year = fd_year_msg.match(/(\d+)/)[1]
       cols << idx
       records << {fd_code:stock.code, fd_year:fd_year, fd_repdate:fd_repdate, fd_type:fd_type, currency:currency}
+    end
+
+    if @@import_failed[stock.code] && !@@import_failed[stock.code].blank?
+      puts "ignore repdate of #{stock.code}: #{@@import_failed[stock.code].inspect}"
     end
 
     # 计算行
@@ -264,7 +270,7 @@ class FinReport < ActiveRecord::Base
 
     json_str = match_data[1]
     keyindex_json = ActiveSupport::JSON.decode(json_str)
-    keyindex_report = keyindex_json["report"]
+    keyindex_report = keyindex_json["year"]
 
     regexp = /<p id="debt">(.*)<\/p>/
     match_data = rsp.match(regexp)
@@ -272,7 +278,7 @@ class FinReport < ActiveRecord::Base
 
     debt_json_str = match_data[1]
     debt_json = ActiveSupport::JSON.decode(debt_json_str)
-    debt_report = debt_json["report"]
+    debt_report = debt_json["year"]
 
     regexp = /<p id="cash">(.*)<\/p>/
     match_data = rsp.match(regexp)
@@ -280,7 +286,7 @@ class FinReport < ActiveRecord::Base
 
     cash_json_str = match_data[1]
     cash_json = ActiveSupport::JSON.decode(cash_json_str)
-    cash_report = cash_json["report"]
+    cash_report = cash_json["year"]
 
     records = []
     cols = []
@@ -298,30 +304,22 @@ class FinReport < ActiveRecord::Base
     end
 
     keyindex_report[0].each_with_index  do |cell,idx|
-      unless cell.to_s.match(/^20[1-9][0-9]/)
+      if cell.to_s.strip.match(/^20[1-9][0-9]$/)
+        fd_repdate = Date.strptime(cell+"-12-31", "%Y-%m-%d")
+        fd_type = TYPE_ANNUAL
+      else
+        @@import_failed[stock.code] ||= []
+        @@import_failed[stock.code] << cell.to_s if @@import_failed[stock.code].size < 4
         next
-      end
-
-      fd_repdate = Date.strptime(cell, '%Y-%m-%d')
-      case fd_repdate.month
-        when 3
-          fd_type = TYPE_Q1
-        when 6
-          fd_type = TYPE_SUM_Q2
-        when 9
-          fd_type = TYPE_SUM_Q3
-        when 12
-          fd_type = TYPE_ANNUAL
-        else
-          @@import_failed[stock.code] ||= []
-          @@import_failed[stock.code] << fd_repdate.to_s if @@import_failed[stock.code].size < 4
-          puts "invalid repdate of #{stock.code}: #{fd_repdate}"
-          next
       end
 
       fd_year = fd_repdate.year
       cols << idx
       records << {fd_code:stock.code, fd_year:fd_year, fd_repdate:fd_repdate, fd_type:fd_type, currency:currency}
+    end
+
+    if @@import_failed[stock.code] && !@@import_failed[stock.code].blank?
+      puts "ignore repdate of #{stock.code}: #{@@import_failed[stock.code].inspect}"
     end
 
     # 计算行
