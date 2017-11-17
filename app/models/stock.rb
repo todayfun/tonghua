@@ -1,6 +1,6 @@
 class Stock < ActiveRecord::Base
   attr_accessible :code, :stamp, :weekrise, :monthrise, :gb,:sz,:low52w, :high52w, :price,:pe, :gpcode,:name,
-                  :good,:bad
+                  :good,:bad,:roe
 
   serialize :good, JSON
   serialize :bad,JSON

@@ -4,7 +4,7 @@ class StocksController < ApplicationController
   # GET /stocks
   # GET /stocks.json
   def index
-    @stocks = Stock.where("(weekrise>0 and monthrise>0 or good <> '{}' ) and bad='{}'").order("stamp asc,monthrise desc,weekrise desc").all
+    @stocks = Stock.where("((weekrise>0 and monthrise>0 and roe>14) or (good <> '{}' and roe>12)) and bad='{}'").order("stamp asc,monthrise desc,weekrise desc").all
 
     respond_to do |format|
       format.html # index.html.erb

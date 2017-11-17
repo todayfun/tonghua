@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20171113043954) do
+ActiveRecord::Schema.define(:version => 20171117154852) do
 
   create_table "daylines", :force => true do |t|
     t.string   "code"
@@ -33,7 +33,7 @@ ActiveRecord::Schema.define(:version => 20171113043954) do
     t.string   "fd_code"
     t.integer  "fd_year"
     t.datetime "fd_repdate"
-    t.string  "fd_type"
+    t.string   "fd_type"
     t.float    "fd_turnover"
     t.float    "fd_profit_after_tax"
     t.float    "fd_profit_base_share"
@@ -156,6 +156,7 @@ ActiveRecord::Schema.define(:version => 20171113043954) do
     t.string   "gpcode"
     t.text     "good"
     t.text     "bad"
+    t.float    "roe"
   end
 
   add_index "stocks", ["code"], :name => "sqlite_autoindex_stocks_1", :unique => true

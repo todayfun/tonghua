@@ -52,8 +52,8 @@ class FinReport < ActiveRecord::Base
       end
     end
 
-    puts "\n\n==import complete: #{@@import_failed.size} stock failed:"
-    puts @@import_failed.inspect
+    # puts "\n\n==import complete: #{@@import_failed.size} stock failed:"
+    # puts @@import_failed.inspect
   end
 
   # 计算股东权益回报率
@@ -308,7 +308,7 @@ class FinReport < ActiveRecord::Base
     q_profit_arr = keyindex_report[keyindex_row_idx[:profit]]
     fy_profit_arr = keyindex_year[keyindex_row_idx[:profit]]
     reptype_arr = self.calc_reptype_of_hk q_profit_arr,fy_profit_arr
-    puts "reptype_arr:#{reptype_arr.inspect}"
+    # puts "reptype_arr:#{reptype_arr.inspect}"
 
     records = []
     cols = []
@@ -433,7 +433,7 @@ class FinReport < ActiveRecord::Base
         if tmp_cnt == rep_cnt_of_year
           tmp_cnt = 1
         else
-          puts "tmp_cnt != rep_cnt_of_year: #{tmp_cnt},#{rep_cnt_of_year}"
+          # puts "tmp_cnt != rep_cnt_of_year: #{tmp_cnt},#{rep_cnt_of_year}"
           break
         end
       elsif reptype_arr[tmp_idx].nil?

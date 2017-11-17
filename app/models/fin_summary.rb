@@ -30,7 +30,14 @@ class FinSummary < ActiveRecord::Base
 
     good = stock_good(stock,q_matrix,q_matrix_meta,fy_matrix)
     bad = stock_bad(stock,q_matrix,q_matrix_meta,fy_matrix)
-    stock.update_attributes good:good,bad:bad
+
+    roe = fy_matrix[:profit_of_holderright].compact()[0,4]
+    avg_roe = nil
+    unless roe.empty?
+      avg_roe = (roe.sum / roe.count).round(2)
+    end
+
+    stock.update_attributes good:good,bad:bad,roe:avg_roe
 
     #FinSummary.create code:stock.code,repdate:fin_reports.first.fd_repdate,type:TYPE_QUARTER,matrix:q_matrix,matrix_meta:q_matrix_meta
   end
@@ -55,7 +62,7 @@ class FinSummary < ActiveRecord::Base
 
     uprate_vs_pe = nil
     if stock.pe && q_matrix[:up_rate_of_profit][0] && q_matrix[:up_rate_of_profit][1]
-      if (stock.pe < q_matrix[:up_rate_of_profit][0] * 0.7) && q_matrix[:up_rate_of_profit][1] > 5 && q_matrix[:up_rate_of_profit][0]>20 && stock.pe < 60
+      if (stock.pe < q_matrix[:up_rate_of_profit][0] * 0.8) && q_matrix[:up_rate_of_profit][1] > 10 && q_matrix[:up_rate_of_profit][0]>20 && stock.pe < 60
         uprate_vs_pe = (q_matrix[:up_rate_of_profit][0]/stock.pe).round(1)
       end
     end
@@ -90,7 +97,7 @@ class FinSummary < ActiveRecord::Base
 
     # 股东权益回报率很高
     high_RoE_cnt = 0
-    roe = fy_matrix[:profit_of_holderright].compact()[0,3]
+    roe = fy_matrix[:profit_of_holderright].compact()[0,4]
     unless roe.empty?
       avg_roe = roe.sum / roe.count
 
@@ -148,7 +155,7 @@ class FinSummary < ActiveRecord::Base
 
     # 股东权益回报率 平均不能太低
     low_RoE_cnt = 0
-    roe = fy_matrix[:profit_of_holderright].compact()[0,3]
+    roe = fy_matrix[:profit_of_holderright].compact()[0,4]
     unless roe.empty?
       avg_roe = roe.sum / roe.count
 
