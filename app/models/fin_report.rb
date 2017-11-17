@@ -20,12 +20,10 @@ class FinReport < ActiveRecord::Base
                   :profit_of_holderright, # 股东权益回报率
                   :profit # 净利润
 
-  TYPE_Q1 = 4
-  TYPE_Q2 = 3
-  TYPE_Q3 = 2
-  TYPE_ANNUAL = 1
-  TYPE_SUM_Q2 = 6
-  TYPE_SUM_Q3 = 9
+  TYPE_Q1 = "Q1"
+  TYPE_SUM_Q2 = "SUM_Q2"
+  TYPE_SUM_Q3 = "SUM_Q3"
+  TYPE_ANNUAL = "FY"
 
   FIN_RPT_UNIT=10000   # 万，同花顺的财报以 万元为单位
 
@@ -270,7 +268,8 @@ class FinReport < ActiveRecord::Base
 
     json_str = match_data[1]
     keyindex_json = ActiveSupport::JSON.decode(json_str)
-    keyindex_report = keyindex_json["year"]
+    keyindex_report = keyindex_json["report"] # 季报
+    keyindex_year = keyindex_json["year"] # 年报
 
     regexp = /<p id="debt">(.*)<\/p>/
     match_data = rsp.match(regexp)
@@ -278,7 +277,7 @@ class FinReport < ActiveRecord::Base
 
     debt_json_str = match_data[1]
     debt_json = ActiveSupport::JSON.decode(debt_json_str)
-    debt_report = debt_json["year"]
+    debt_report = debt_json["report"]
 
     regexp = /<p id="cash">(.*)<\/p>/
     match_data = rsp.match(regexp)
@@ -286,41 +285,7 @@ class FinReport < ActiveRecord::Base
 
     cash_json_str = match_data[1]
     cash_json = ActiveSupport::JSON.decode(cash_json_str)
-    cash_report = cash_json["year"]
-
-    records = []
-    cols = []
-    # fd_year, fd_type
-    # 计算财年
-    currency = CURRENCY_HKD
-    keyindex_json["title"][1..-1].each do |arr|
-      if arr[1] == "元"
-        currency = CURRENCY_CNY
-        break
-      elsif arr[1] == "港元"
-        currency = CURRENCY_HKD
-        break
-      end
-    end
-
-    keyindex_report[0].each_with_index  do |cell,idx|
-      if cell.to_s.strip.match(/^20[1-9][0-9]$/)
-        fd_repdate = Date.strptime(cell+"-12-31", "%Y-%m-%d")
-        fd_type = TYPE_ANNUAL
-      else
-        @@import_failed[stock.code] ||= []
-        @@import_failed[stock.code] << cell.to_s if @@import_failed[stock.code].size < 4
-        next
-      end
-
-      fd_year = fd_repdate.year
-      cols << idx
-      records << {fd_code:stock.code, fd_year:fd_year, fd_repdate:fd_repdate, fd_type:fd_type, currency:currency}
-    end
-
-    if @@import_failed[stock.code] && !@@import_failed[stock.code].blank?
-      puts "ignore repdate of #{stock.code}: #{@@import_failed[stock.code].inspect}"
-    end
+    cash_report = cash_json["report"]
 
     # 计算行
     keyindex_row_title = keyindex_json["title"][1..-1].map do |arr|
@@ -340,6 +305,54 @@ class FinReport < ActiveRecord::Base
     debt_row_idx = calc_row_idx debt_row_label,debt_row_title, stock.code
     cash_row_idx = calc_row_idx cash_row_label,cash_row_title,stock.code
 
+    q_profit_arr = keyindex_report[keyindex_row_idx[:profit]]
+    fy_profit_arr = keyindex_year[keyindex_row_idx[:profit]]
+    reptype_arr = self.calc_reptype_of_hk q_profit_arr,fy_profit_arr
+    puts "reptype_arr:#{reptype_arr.inspect}"
+
+    records = []
+    cols = []
+    # fd_year, fd_type
+    # 计算财年
+    currency = CURRENCY_HKD
+    keyindex_json["title"][1..-1].each do |arr|
+      if arr[1] == "元"
+        currency = CURRENCY_CNY
+        break
+      elsif arr[1] == "港元"
+        currency = CURRENCY_HKD
+        break
+      end
+    end
+
+    keyindex_report[0].each_with_index  do |cell,idx|
+      flg_failed = false
+      if cell.to_s.strip.match(/^20[1-9][0-9]/)
+        fd_repdate = Date.strptime(cell, "%Y-%m-%d")
+        fd_type = reptype_arr[idx]
+
+        if fd_type.nil?
+          flg_failed = true
+        end
+      else
+        flg_failed = true
+      end
+
+      if flg_failed
+        @@import_failed[stock.code] ||= []
+        @@import_failed[stock.code] << cell.to_s if @@import_failed[stock.code].size < 4
+        next
+      end
+
+      fd_year = fd_repdate.year
+      cols << idx
+      records << {fd_code:stock.code, fd_year:fd_year, fd_repdate:fd_repdate, fd_type:fd_type, currency:currency}
+    end
+
+    if @@import_failed[stock.code] && !@@import_failed[stock.code].blank?
+      puts "ignore repdate of #{stock.code}: #{@@import_failed[stock.code].inspect}"
+    end
+
     # 填充表格
     cols.each_with_index do |col,idx|
       keyindex_row_idx.each do |field,row|
@@ -356,6 +369,80 @@ class FinReport < ActiveRecord::Base
     end
 
     records
+  end
+
+  # 计算港股财报的类型：季报，年报
+  # 通过比较年报和季报的收益 来确定季报中哪些是年报
+  def self.calc_reptype_of_hk(q_profit_arr,fy_profit_arr)
+    reptype_arr = []
+
+    start_idx = 0
+    q_profit_arr.each do |q_profit|
+      flg = false
+      fy_profit_arr[start_idx..-1].each_with_index do |fy_profit,i|
+        if q_profit == fy_profit
+          flg = true
+          start_idx=i+1
+          break
+        end
+      end
+
+      if flg
+        reptype_arr << TYPE_ANNUAL
+      else
+        reptype_arr << nil
+      end
+    end
+
+    fy_idx1=nil
+    fy_idx2=nil
+    reptype_arr.each_with_index do |type,idx|
+      if type==TYPE_ANNUAL
+        if fy_idx1.nil?
+          fy_idx1 = idx
+        else fy_idx1 && fy_idx2.nil?
+          fy_idx2 = idx
+          break
+        end
+      end
+    end
+
+    q_reptype_arr_of_year = []
+    rep_cnt_of_year = fy_idx2 - fy_idx1
+    case rep_cnt_of_year
+      when 2
+        # 只发半年报
+        q_reptype_arr_of_year = [TYPE_ANNUAL,TYPE_SUM_Q2]
+      when 4
+        # 发季报
+        q_reptype_arr_of_year = [TYPE_ANNUAL,TYPE_SUM_Q3,TYPE_SUM_Q2,TYPE_Q1]
+      else
+        puts "invalid rep_cnt_of_year: #{rep_cnt_of_year}"
+    end
+
+    # 填写头部
+    reptype_arr[0...fy_idx1].each_index do |idx|
+      reptype_arr[idx] = q_reptype_arr_of_year[(rep_cnt_of_year-fy_idx1)+idx]
+    end
+
+    # 填写中部，尾部
+    tmp_cnt = rep_cnt_of_year
+    reptype_arr[(fy_idx1)..-1].each_index do |idx|
+      tmp_idx = fy_idx1 + idx
+      if reptype_arr[tmp_idx] == TYPE_ANNUAL
+        if tmp_cnt == rep_cnt_of_year
+          tmp_cnt = 1
+        else
+          puts "tmp_cnt != rep_cnt_of_year: #{tmp_cnt},#{rep_cnt_of_year}"
+          break
+        end
+      elsif reptype_arr[tmp_idx].nil?
+        reptype_arr[tmp_idx] = q_reptype_arr_of_year[tmp_cnt]
+        tmp_cnt += 1
+      end
+    end
+
+    reptype_arr
   end
 
   def self.calc_row_idx(cash_row_label,cash_row_title, code)
@@ -668,16 +755,12 @@ class FinReport < ActiveRecord::Base
     case type
       when FinReport::TYPE_Q1
         "Q1"
-      when FinReport::TYPE_Q2
-        "Q2"
-      when FinReport::TYPE_Q3
-        "Q3"
-      when FinReport::TYPE_ANNUAL
-        "FY"
       when FinReport::TYPE_SUM_Q2
         "SUM_Q2"
       when FinReport::TYPE_SUM_Q3
         "SUM_Q3"
+      when FinReport::TYPE_ANNUAL
+        "FY"
       else
         "invalid"
     end

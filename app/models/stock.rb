@@ -261,7 +261,7 @@ rsp.body:
       self.bad = bad
       self.good = good
       self.save
-    elsif mark = "clear"
+    elsif mark == "clear"
       good.delete "mark_at"
       bad.delete "mark_at"
 
