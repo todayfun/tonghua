@@ -82,14 +82,14 @@ class FinSummary < ActiveRecord::Base
     if flg && !arr_rate.empty?
       avg_rate = (arr_rate.sum/arr_rate.count).round(2)
 
-      flg &&= avg_rate>15
+      flg &&= avg_rate>15 && arr_rate.min > 5
       flg &&= fy_matrix[:up_rate_of_profit][0] && fy_matrix[:up_rate_of_profit][0]>15
       flg &&= fy_matrix[:up_rate_of_profit][1] && fy_matrix[:up_rate_of_profit][1]>10
 
-      flg &&= pe < ((1+avg_rate*0.01)/(1+0.2))**6 * 14.3
+      flg &&= stock.pe < ((1+avg_rate*0.01)/(1+0.2))**6 * 14.3
 
       if flg
-        uprate_vs_pe = "#{(q_matrix[:up_rate_of_profit][0]/pe).round(1)},avg_rate:#{avg_rate}%"
+        uprate_vs_pe = "#{(fy_matrix[:up_rate_of_profit][0]/stock.pe).round(1)},avg_rate:#{avg_rate}%"
       end
     end
 
