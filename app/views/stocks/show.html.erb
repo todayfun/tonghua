@@ -44,8 +44,9 @@
     <th>每股现金</th>
     <th>现金及等价物</th>
     <th>remark</th>
-    <th>长期负债</th>
+    <th>净利润</th>
     <th>股东权益</th>
+    <th>长期负债</th>
     <th>remark</th>
     <th>流动负债</th>
     <th>流动资产</th>
@@ -61,8 +62,9 @@
         <td><%= FinReport.cash_base_share(@stock.gb,fin_report.fd_cash_and_deposit)  %></td>
         <td><%= fin_report.fd_cash_and_deposit %></td>
         <td></td>
-        <td><%= fin_report.fd_non_liquid_debts %></td>
+        <td><%= fin_report.profit %></td>
         <td><%= fin_report.fd_stkholder_rights %></td>
+        <td><%= fin_report.fd_non_liquid_debts %></td>
         <td></td>
         <td><%= fin_report.fd_liquid_debts %></td>
         <td><%= fin_report.fd_liquid_assets %></td>

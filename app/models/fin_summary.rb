@@ -31,7 +31,7 @@ class FinSummary < ActiveRecord::Base
     good = stock_good(stock,q_matrix,q_matrix_meta,fy_matrix)
     bad = stock_bad(stock,q_matrix,q_matrix_meta,fy_matrix)
 
-    roe = fy_matrix[:profit_of_holderright].compact()[0,4]
+    roe = fy_matrix[:profit_of_holderright].compact()[0,2]
     avg_roe = nil
     unless roe.empty?
       avg_roe = (roe.sum / roe.count).round(2)
@@ -76,20 +76,20 @@ class FinSummary < ActiveRecord::Base
 
     # 按权益价值计算回报率
     uprate_vs_pe = nil
-    arr_rate = fy_matrix[:up_rate_of_profit].compact()[0,4]
+    arr_rate = q_matrix[:up_rate_of_profit].compact()[0,4]
     flg = stock.pe&&stock.pe>5&&stock.pe<70
 
     if flg && !arr_rate.empty?
       avg_rate = (arr_rate.sum/arr_rate.count).round(2)
 
       flg &&= avg_rate>15 && arr_rate.min > 5
-      flg &&= fy_matrix[:up_rate_of_profit][0] && fy_matrix[:up_rate_of_profit][0]>15
-      flg &&= fy_matrix[:up_rate_of_profit][1] && fy_matrix[:up_rate_of_profit][1]>10
+      flg &&= q_matrix[:up_rate_of_profit][0] && q_matrix[:up_rate_of_profit][0]>15
+      flg &&= q_matrix[:up_rate_of_profit][1] && q_matrix[:up_rate_of_profit][1]>10
 
       flg &&= stock.pe < ((1+avg_rate*0.01)/(1+0.2))**6 * 14.3
 
       if flg
-        uprate_vs_pe = "#{(fy_matrix[:up_rate_of_profit][0]/stock.pe).round(1)},avg_rate:#{avg_rate}%"
+        uprate_vs_pe = "#{(q_matrix[:up_rate_of_profit][0]/stock.pe).round(1)},avg_rate:#{avg_rate}%"
       end
     end
 
@@ -167,16 +167,18 @@ class FinSummary < ActiveRecord::Base
       end
     end
 
-    # 收益率负增长
-    down_rate_cnt = 0
-    [0,2].each do |i|
-    if q_matrix[:up_rate_of_profit][i] && q_matrix[:up_rate_of_profit][i] < 0
-      down_rate_cnt += 1
-    end
-    end
+    # 收益增长率很低
+    arr_rate = q_matrix[:up_rate_of_profit].compact()[0,4]
+    flg = stock.pe&&stock.pe<4
 
-    if down_rate_cnt >= 2
-      bad["down_rate_cnt"] = down_rate_cnt
+    if flg && !arr_rate.empty?
+      avg_rate = (arr_rate.sum/arr_rate.count).round(2)
+
+      flg &&= avg_rate<5 && arr_rate.max < 6
+
+      if flg
+        bad["low_rate_cnt"] = "avg_rate:#{avg_rate}"
+      end
     end
 
     # 股东权益回报率 平均不能太低
