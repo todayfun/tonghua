@@ -6,5 +6,4 @@ desc "Stock fin report quarterly"
 task :fin_report => :environment do
   FinReport.import_finRpt
   FinReport.calc_profit_of_holderright
-  # Stock.import_summary
 end

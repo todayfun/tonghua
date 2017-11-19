@@ -27,6 +27,12 @@ class Stock < ActiveRecord::Base
 
     sz = data["sz"].to_f*100000000
     gb = (sz / data["newpri"].to_f).to_i
+
+    if data["pe"].blank? || data["newpri"].blank?
+      puts "invalid stock summary: #{data.inspect}"
+      return
+    end
+
     stock.update_attributes gb:gb,sz:sz,low52w:data["52wl"],high52w:data["52wh"],price:data["newpri"],pe:data["pe"]
   end
 

@@ -52,6 +52,20 @@ class FinSummary < ActiveRecord::Base
   end
 
   # 计算最近财报收益增长率uprate > pe的
+  #
+  # B.按权益价值计算回报率
+  # 权益=每股权益*(1+α)^n* 权益收益率=每股收益*(1+α)^n
+  # 卖价=权益÷ 政府债券收益率(5%~8%)
+
+  # 复利计算: 每股收益*(1+α)^n / (5%~8%) = 买入价 * (1+β复利)^n  ，推导出:
+  #    PE=(1+α)^n /  (1+β复利)^n / (5%~8%)
+  #
+  # 假设 n=6，债券利率7%，则:
+  # β=0.2，α=0.15 => PE=0.77*14.3=10
+  # β=0.2，α=0.2 => PE=1*14.3=14.3
+  # β=0.2，α=0.3 => PE=1.6*14.3=23
+  # β=0.2，α=0.4 => PE=2.5*14.3=36
+  # β=0.2，α=0.5 => PE=3.8*14.3=54
   def self.stock_good(stock,q_matrix,q_matrix_meta,fy_matrix)
     # 3个月以前的 手工标记丢掉
     if stock.good && stock.good["mark_at"] && stock.good["mark_at"] > 3.month.ago.to_date.to_s
@@ -60,10 +74,22 @@ class FinSummary < ActiveRecord::Base
       good = {}
     end
 
+    # 按权益价值计算回报率
     uprate_vs_pe = nil
-    if stock.pe && q_matrix[:up_rate_of_profit][0] && q_matrix[:up_rate_of_profit][1]
-      if (stock.pe < q_matrix[:up_rate_of_profit][0] * 0.8) && q_matrix[:up_rate_of_profit][1] > 10 && q_matrix[:up_rate_of_profit][0]>20 && stock.pe < 60
-        uprate_vs_pe = (q_matrix[:up_rate_of_profit][0]/stock.pe).round(1)
+    arr_rate = fy_matrix[:up_rate_of_profit].compact()[0,4]
+    flg = stock.pe&&stock.pe>5&&stock.pe<70
+
+    if flg && !arr_rate.empty?
+      avg_rate = (arr_rate.sum/arr_rate.count).round(2)
+
+      flg &&= avg_rate>15
+      flg &&= fy_matrix[:up_rate_of_profit][0] && fy_matrix[:up_rate_of_profit][0]>15
+      flg &&= fy_matrix[:up_rate_of_profit][1] && fy_matrix[:up_rate_of_profit][1]>10
+
+      flg &&= pe < ((1+avg_rate*0.01)/(1+0.2))**6 * 14.3
+
+      if flg
+        uprate_vs_pe = "#{(q_matrix[:up_rate_of_profit][0]/pe).round(1)},avg_rate:#{avg_rate}%"
       end
     end
 

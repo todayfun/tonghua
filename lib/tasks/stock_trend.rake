@@ -7,6 +7,7 @@ task :stock_trend => :environment do
   Monthline.import
   Weekline.import
   Dayline.import if ENV["skip"]!="Dayline"
+  Stock.import_summary
   Stock.rise_trend
   FinSummary.import
 end
