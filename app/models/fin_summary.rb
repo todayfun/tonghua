@@ -13,8 +13,8 @@ class FinSummary < ActiveRecord::Base
       begin
         import_one_quarter stock
         #import_one_fy stock
-      rescue => err
-        puts "#{stock.code}:#{err}"
+      # rescue => err
+      #   puts "#{stock.code}:#{err}"
       end
     end
 
@@ -37,7 +37,13 @@ class FinSummary < ActiveRecord::Base
       avg_roe = (roe.sum / roe.count).round(2)
     end
 
-    stock.update_attributes good:good,bad:bad,roe:avg_roe
+    rate_of_profit = fy_matrix[:up_rate_of_pure_profit].compact()[0,2]
+    avg_rate_of_profit = nil
+    unless rate_of_profit.empty?
+      avg_rate_of_profit = (rate_of_profit.sum / rate_of_profit.count).round(2)
+    end
+
+    stock.update_attributes good:good,bad:bad,roe:avg_roe, rate_of_profit:avg_rate_of_profit
 
     #FinSummary.create code:stock.code,repdate:fin_reports.first.fd_repdate,type:TYPE_QUARTER,matrix:q_matrix,matrix_meta:q_matrix_meta
   end

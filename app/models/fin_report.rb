@@ -547,9 +547,9 @@ class FinReport < ActiveRecord::Base
 
     # 计算年报
     fy_matrix = {fd_year:[],fd_price:[],fd_profit_base_share:[],fd_cash_base_share:[],fd_debt_rate:[],fd_virtual_profit_base_share:[],
-                 pe:[],up_rate_of_profit:[],operating_cash:[],invest_cash:[],loan_cash:[],profit_of_holderright:[]}
+                 pe:[],up_rate_of_profit:[],up_rate_of_pure_profit:[],operating_cash:[],invest_cash:[],loan_cash:[],profit_of_holderright:[]}
 
-    fy_matrix_meta = {idx:[],profit_base_share:{},operating_cash:{},pe:{},up_rate_of_profit:{},price:{}}
+    fy_matrix_meta = {idx:[],profit_base_share:{},operating_cash:{},pe:{},up_rate_of_profit:{},up_rate_of_pure_profit:{},price:{},profit:{}}
     fin_reports.each do |r|
       next if r.fd_type != FinReport::TYPE_ANNUAL
 
@@ -568,6 +568,7 @@ class FinReport < ActiveRecord::Base
       fy_matrix_meta[:price][uk] = fy_matrix[:fd_price].last
       fy_matrix_meta[:operating_cash][uk] = fy_matrix[:operating_cash].last
       fy_matrix_meta[:profit_base_share][uk] = fy_matrix[:fd_profit_base_share].last
+      fy_matrix_meta[:profit][uk] = r.profit
       fy_matrix_meta[:idx] << [r.fd_year,r.fd_type]
     end
 
@@ -576,13 +577,21 @@ class FinReport < ActiveRecord::Base
       prev_year = e[0].to_i - 1
       prev_year_uk = "#{prev_year},#{e[1]}"
 
-      rate = if fy_matrix_meta[:profit_base_share][uk] && fy_matrix_meta[:profit_base_share][prev_year_uk]  && fy_matrix_meta[:profit_base_share][prev_year_uk]>0
+      rate = if fy_matrix_meta[:profit_base_share][uk] && fy_matrix_meta[:profit_base_share][prev_year_uk]  && fy_matrix_meta[:profit_base_share][prev_year_uk]!=0
                ((fy_matrix_meta[:profit_base_share][uk] - fy_matrix_meta[:profit_base_share][prev_year_uk]) * 100/ fy_matrix_meta[:profit_base_share][prev_year_uk]).round(2)
              else
                nil
              end
       fy_matrix[:up_rate_of_profit] << rate
       fy_matrix_meta[:up_rate_of_profit][uk] = rate
+
+      rate = if fy_matrix_meta[:profit][uk] && fy_matrix_meta[:profit][prev_year_uk]  && fy_matrix_meta[:profit][prev_year_uk]!=0
+               ((fy_matrix_meta[:profit][uk] - fy_matrix_meta[:profit][prev_year_uk]) * 100/ fy_matrix_meta[:profit][prev_year_uk]).round(2)
+             else
+               nil
+             end
+      fy_matrix[:up_rate_of_pure_profit] << rate
+      fy_matrix_meta[:up_rate_of_pure_profit][uk] = rate
 
       # calc pe
       pe = if fy_matrix[:fd_price][idx] && fy_matrix[:fd_profit_base_share][idx] && fy_matrix[:fd_profit_base_share][idx]>0
@@ -603,9 +612,9 @@ class FinReport < ActiveRecord::Base
     currency = nil
 
     q_matrix = {fd_repdate:[],fd_price:[],fd_profit_base_share:[],fd_cash_base_share:[],fd_debt_rate:[],fd_rights_rate:[],
-                operating_cash:[],invest_cash:[],loan_cash:[],up_rate_of_profit:[],sum_profit_of_lastyear:[],pe:[],profit_of_holderright:[]}
+                operating_cash:[],invest_cash:[],loan_cash:[],up_rate_of_profit:[],up_rate_of_pure_profit:[],sum_profit_of_lastyear:[],pe:[],profit_of_holderright:[]}
     cnt = 0
-    q_matrix_meta = {idx:[],profit_base_share:{},operating_cash:{},pe:{},up_rate_of_profit:{},sum_profit_of_lastyear:{},price:{}}
+    q_matrix_meta = {idx:[],profit_base_share:{},operating_cash:{},pe:{},up_rate_of_profit:{},up_rate_of_pure_profit:{},sum_profit_of_lastyear:{},price:{},profit:{}}
     fin_reports.each do |r|
       currency = r.currency
       q_matrix[:fd_repdate] << "#{r.fd_repdate.strftime '%Y%m%d'}<br/>#{fin_report_label r.fd_type}"
@@ -623,6 +632,7 @@ class FinReport < ActiveRecord::Base
       q_matrix_meta[:price][uk] = q_matrix[:fd_price].last
       q_matrix_meta[:operating_cash][uk] = q_matrix[:operating_cash].last
       q_matrix_meta[:profit_base_share][uk] = q_matrix[:fd_profit_base_share].last
+      q_matrix_meta[:profit][uk] = r.profit
       q_matrix_meta[:idx] << [r.fd_year,r.fd_type]
 
       cnt += 1
@@ -633,13 +643,21 @@ class FinReport < ActiveRecord::Base
       uk = "#{e[0]},#{e[1]}"
       prev_year = e[0].to_i - 1
       prev_year_uk = "#{prev_year},#{e[1]}"
-      rate = if q_matrix_meta[:profit_base_share][uk] && q_matrix_meta[:profit_base_share][prev_year_uk]  && q_matrix_meta[:profit_base_share][prev_year_uk]>0
+      rate = if q_matrix_meta[:profit_base_share][uk] && q_matrix_meta[:profit_base_share][prev_year_uk]  && q_matrix_meta[:profit_base_share][prev_year_uk]!=0
                ((q_matrix_meta[:profit_base_share][uk] - q_matrix_meta[:profit_base_share][prev_year_uk]) * 100/ q_matrix_meta[:profit_base_share][prev_year_uk]).round(2)
              else
                nil
              end
       q_matrix[:up_rate_of_profit] << rate
       q_matrix_meta[:up_rate_of_profit][uk] = rate
+
+      rate = if q_matrix_meta[:profit][uk] && q_matrix_meta[:profit][prev_year_uk]  && q_matrix_meta[:profit][prev_year_uk]!=0
+               ((q_matrix_meta[:profit][uk] - q_matrix_meta[:profit][prev_year_uk]) * 100/ q_matrix_meta[:profit][prev_year_uk]).round(2)
+             else
+               nil
+             end
+      q_matrix[:up_rate_of_pure_profit] << rate
+      q_matrix_meta[:up_rate_of_pure_profit][uk] = rate
 
       prev_fy_uk = "#{prev_year},#{FinReport::TYPE_ANNUAL}"
       v = if q_matrix_meta[:profit_base_share][uk] && q_matrix_meta[:profit_base_share][prev_fy_uk] && q_matrix_meta[:profit_base_share][prev_year_uk]

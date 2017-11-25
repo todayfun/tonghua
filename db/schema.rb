@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20171117154852) do
+ActiveRecord::Schema.define(:version => 20171125025201) do
 
   create_table "daylines", :force => true do |t|
     t.string   "code"
@@ -142,8 +142,8 @@ ActiveRecord::Schema.define(:version => 20171117154852) do
   create_table "stocks", :force => true do |t|
     t.string   "code"
     t.string   "stamp"
-    t.datetime "created_at", :null => false
-    t.datetime "updated_at", :null => false
+    t.datetime "created_at",     :null => false
+    t.datetime "updated_at",     :null => false
     t.integer  "weekrise"
     t.integer  "monthrise"
     t.integer  "gb"
@@ -157,6 +157,7 @@ ActiveRecord::Schema.define(:version => 20171117154852) do
     t.text     "good"
     t.text     "bad"
     t.float    "roe"
+    t.float    "rate_of_profit"
   end
 
   add_index "stocks", ["code"], :name => "sqlite_autoindex_stocks_1", :unique => true

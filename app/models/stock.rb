@@ -1,6 +1,8 @@
 class Stock < ActiveRecord::Base
   attr_accessible :code, :stamp, :weekrise, :monthrise, :gb,:sz,:low52w, :high52w, :price,:pe, :gpcode,:name,
-                  :good,:bad,:roe
+                  :good,:bad,
+                  :roe,# 股东权益汇报率，在股本减少的情况下，即便净利润下降，权益回报率还是能够保持
+                  :rate_of_profit # 净利润增长率
 
   serialize :good, JSON
   serialize :bad,JSON
