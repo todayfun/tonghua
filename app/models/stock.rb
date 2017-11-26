@@ -11,8 +11,12 @@ class Stock < ActiveRecord::Base
   # {"code":0,"msg":"ok","data":{"ssl":0,"sjl":0,"gb":0,"px":0,"avgm":0,"newpri":"272.60","yespri":"273.00","higpri":"276.40","lowpri":"272.60","volume":"20927343.0","dt":"2017\/06\/16 16:09:09","zd":"-0.40","zdf":"-0.15","sz":"25837.12","pe":"55.97","psy":"0.22","52wh":"283.40","52wl":"167.00"}}
   def self.import_summary
     stocks = Stock.all
+    ignored_codes = Runlog.ignored Runlog::NAME_STOCK_SUMMARY,[Runlog::STATUS_DISABLE,Runlog::STATUS_IGNORE],1.day.ago
     stocks.each do |stock|
-      import_summary_one stock
+      next if ignored_codes.include?(stock.code)
+      status = import_summary_one stock
+      status ||= Runlog::STATUS_IGNORE
+      Runlog.update_log stock.code,Runlog::NAME_STOCK_SUMMARY,status
     end
   end
 
@@ -36,6 +40,8 @@ class Stock < ActiveRecord::Base
     end
 
     stock.update_attributes gb:gb,sz:sz,low52w:data["52wl"],high52w:data["52wh"],price:data["newpri"],pe:data["pe"]
+
+    Runlog::STATUS_OK
   end
 
   def self.rise_trend(weekcnt=2,monthcnt=24)

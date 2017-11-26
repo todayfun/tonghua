@@ -547,7 +547,8 @@ class FinReport < ActiveRecord::Base
 
     # 计算年报
     fy_matrix = {fd_year:[],fd_price:[],fd_profit_base_share:[],fd_cash_base_share:[],fd_debt_rate:[],fd_virtual_profit_base_share:[],
-                 pe:[],up_rate_of_profit:[],up_rate_of_pure_profit:[],operating_cash:[],invest_cash:[],loan_cash:[],profit_of_holderright:[]}
+                 pe:[],up_rate_of_profit:[],up_rate_of_pure_profit:[],operating_cash:[],invest_cash:[],loan_cash:[],profit_of_holderright:[],
+                 fd_non_liquid_debts:[],profit:[]}
 
     fy_matrix_meta = {idx:[],profit_base_share:{},operating_cash:{},pe:{},up_rate_of_profit:{},up_rate_of_pure_profit:{},price:{},profit:{}}
     fin_reports.each do |r|
@@ -563,6 +564,8 @@ class FinReport < ActiveRecord::Base
       fy_matrix[:invest_cash] << currency_translate(cash_base_share(stock.gb,r.invest_cash),currency,dest_currency)
       fy_matrix[:loan_cash] << currency_translate(cash_base_share(stock.gb,r.loan_cash),currency,dest_currency)
       fy_matrix[:profit_of_holderright] << r.profit_of_holderright
+      fy_matrix[:fd_non_liquid_debts] << r.fd_non_liquid_debts
+      fy_matrix[:profit] << r.profit
 
       uk = "#{r.fd_year},#{r.fd_type}"
       fy_matrix_meta[:price][uk] = fy_matrix[:fd_price].last

@@ -13,8 +13,8 @@ class FinSummary < ActiveRecord::Base
       begin
         import_one_quarter stock
         #import_one_fy stock
-      # rescue => err
-      #   puts "#{stock.code}:#{err}"
+      rescue => err
+        puts "#{stock.code}:#{err}"
       end
     end
 
@@ -215,6 +215,22 @@ class FinSummary < ActiveRecord::Base
     if stock.pe && q_matrix[:up_rate_of_profit][0] && q_matrix[:up_rate_of_profit][0] > 0
       if (stock.pe > q_matrix[:up_rate_of_profit][0] * 2)
         bad["uprate_lower_pe"] = [q_matrix[:up_rate_of_profit][0],stock.pe]
+      end
+    end
+
+    # 净利润大幅小于长期负债的
+    flg = true
+    flg &&= fy_matrix[:fd_non_liquid_debts]&&fy_matrix[:fd_non_liquid_debts][0]
+    flg &&= fy_matrix[:profit] && fy_matrix[:profit].compact().size>=3
+
+    if flg
+      arr_profit = fy_matrix[:profit].compact()[0,6]
+      avg_profit = arr_profit.sum / arr_profit.size
+      sum_profit = (avg_profit * 6).round(2)
+      flg &&= fy_matrix[:fd_non_liquid_debts][0] > sum_profit
+
+      if flg
+        bad["long_debts vs 6years_profit"]="#{fy_matrix[:fd_non_liquid_debts][0]} > #{sum_profit}"
       end
     end
 
