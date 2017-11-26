@@ -122,7 +122,7 @@ class FinSummary < ActiveRecord::Base
     end
 
     # 下跌后反弹
-    if stock.pe && q_matrix[:up_rate_of_profit][0] && stock.pe < q_matrix[:up_rate_of_profit][0] * 0.7 && stock.pe < 60
+    if stock.pe && q_matrix[:up_rate_of_profit][0] && stock.pe < q_matrix[:up_rate_of_profit][0] * 0.8 && stock.pe < 60
       rise_cnt,down_cnt = Weekline.down_and_rise_trend stock.code,7,0.015
       good[:rise_after_down] = true if rise_cnt>0 && down_cnt > 4
     end
@@ -139,7 +139,7 @@ class FinSummary < ActiveRecord::Base
         end
       end
 
-      if high_RoE_cnt >= 2 && avg_roe > 15 && roe[0]>15 && q_matrix[:up_rate_of_profit][0] && q_matrix[:up_rate_of_profit][0]>10
+      if high_RoE_cnt >= 2 && avg_roe > 15 && roe[0]>15 && q_matrix[:up_rate_of_profit][0] && q_matrix[:up_rate_of_profit][0]>12
         good["high_RoE"] = avg_roe.round(1)
       elsif !good.empty?
         good["avg_RoE"] = avg_roe.round(1)
@@ -175,26 +175,33 @@ class FinSummary < ActiveRecord::Base
 
     # 收益增长率很低
     arr_rate = q_matrix[:up_rate_of_profit].compact()[0,4]
-    flg = stock.pe&&stock.pe<4
+    flg = stock.pe
 
     if flg && !arr_rate.empty?
       avg_rate = (arr_rate.sum/arr_rate.count).round(2)
 
-      flg &&= avg_rate<5 && arr_rate.max < 6
+      flg &&= avg_rate<7 && arr_rate.max < 10
 
       if flg
         bad["low_rate_cnt"] = "avg_rate:#{avg_rate}"
+      end
+
+      max_rate = arr_rate.max
+      min_rate = arr_rate.min
+
+      if (avg_rate*2 < max_rate-min_rate) && arr_rate[0]<15
+        bad["rate_wave_large"] = "rate_wave_large"
       end
     end
 
     # 股东权益回报率 平均不能太低
     low_RoE_cnt = 0
-    roe = fy_matrix[:profit_of_holderright].compact()[0,4]
+    roe = fy_matrix[:profit_of_holderright].compact()[0,3]
     unless roe.empty?
       avg_roe = roe.sum / roe.count
 
       roe.each_with_index do |v,i|
-        if v < 5
+        if v < 7
           low_RoE_cnt += 1
         end
       end
@@ -203,7 +210,6 @@ class FinSummary < ActiveRecord::Base
         bad["low_RoE_cnt"] = low_RoE_cnt
       end
     end
-
 
     # 收益增长率远低于PE
     if stock.pe && q_matrix[:up_rate_of_profit][0] && q_matrix[:up_rate_of_profit][0] > 0

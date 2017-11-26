@@ -5,6 +5,7 @@
     <th>Code</th>
     <th>Name</th>
     <th>增长_VS_PE</th>
+    <th>净利润增长</th>
   </tr>
 
 <% @stocks.each do |stock| %>
@@ -12,6 +13,7 @@
     <td><%= link_to "#{stock.code}#{riselabel(stock)}", stockurl(stock.code,stock.stamp), :target=>'_blank' %></td>
     <td><%= truncate(stock.name, length:12)  %></td>
     <td><%= (stock.good.empty? ? {avg2_roe:stock.roe} : stock.good).map{|k,v| "#{k}:#{v}"}.join("<br/>").html_safe %></td>
+    <td><%= stock.rate_of_profit %></td>
     <td><%= link_to "本地图表", stock%></td>
     <td><%= link_to "同花顺图表", link_to_tonghuashun_finance(stock), :target=>'_blank'%></td>
   </tr>
