@@ -2,10 +2,12 @@ class Stock < ActiveRecord::Base
   attr_accessible :code, :stamp, :weekrise, :monthrise, :gb,:sz,:low52w, :high52w, :price,:pe, :gpcode,:name,
                   :good,:bad,
                   :roe,# 股东权益汇报率，在股本减少的情况下，即便净利润下降，权益回报率还是能够保持
-                  :rate_of_profit # 净利润增长率
+                  :rate_of_profit, # 净利润增长率
+                  :info # fin summary
 
   serialize :good, JSON
   serialize :bad,JSON
+  serialize :info, JSON
 
   # http://web.ifzq.gtimg.cn/portable/mobile/qt/data?code=hk00700
   # {"code":0,"msg":"ok","data":{"ssl":0,"sjl":0,"gb":0,"px":0,"avgm":0,"newpri":"272.60","yespri":"273.00","higpri":"276.40","lowpri":"272.60","volume":"20927343.0","dt":"2017\/06\/16 16:09:09","zd":"-0.40","zdf":"-0.15","sz":"25837.12","pe":"55.97","psy":"0.22","52wh":"283.40","52wl":"167.00"}}

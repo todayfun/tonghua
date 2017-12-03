@@ -11,7 +11,10 @@
   <%= link_to "顶", {action:"mark",id:@stock.id,mark:"good"}, :remote=>true %>
   <%= link_to "踩", {action:"mark",id:@stock.id,mark:"bad"}, :remote=>true %>
   <%= link_to "clear", {action:"mark",id:@stock.id,mark:"clear"}, :remote=>true %>
+  <br>
   <%= @stock.good %>
+  <br>
+  <%= @stock.info %>
 
   <table>
     <tr>
@@ -38,34 +41,38 @@
   <tr>
     <th>财报日期</th>
     <th>财报类型</th>
-    <th>remark</th>
+    <th>|</th>
     <th>每股基本收益</th>
+    <th>收益增长率</th>
     <th>股东权益回报率%</th>
     <th>每股现金</th>
     <th>现金及等价物</th>
-    <th>remark</th>
+    <th>|</th>
     <th>净利润</th>
-    <th>股东权益</th>
     <th>长期负债</th>
-    <th>remark</th>
+    <th>净利润/长期负债</th>
+    <th>|</th>
+    <th>股东权益</th>
     <th>流动负债</th>
     <th>流动资产</th>
   </tr>
 
-  <% @fin_reports.each do |fin_report| %>
+  <% @fin_reports.each_with_index do |fin_report,idx| %>
       <tr>
         <td><%= fin_report.fd_repdate.to_date %></td>
         <td><%= FinReport.fin_report_label fin_report.fd_type %></td>
         <td></td>
         <td><%= fin_report.fd_profit_base_share %></td>
+        <td><%= @q_matrix[:up_rate_of_profit][idx] %></td>
         <td><%= fin_report.profit_of_holderright %></td>
         <td><%= FinReport.cash_base_share(@stock.gb,fin_report.fd_cash_and_deposit)  %></td>
         <td><%= fin_report.fd_cash_and_deposit %></td>
         <td></td>
         <td><%= fin_report.profit %></td>
-        <td><%= fin_report.fd_stkholder_rights %></td>
         <td><%= fin_report.fd_non_liquid_debts %></td>
+        <td><%= (fin_report.profit/fin_report.fd_non_liquid_debts).round(1) if fin_report.profit&&fin_report.fd_non_liquid_debts %></td>
         <td></td>
+        <td><%= fin_report.fd_stkholder_rights %></td>
         <td><%= fin_report.fd_liquid_debts %></td>
         <td><%= fin_report.fd_liquid_assets %></td>
       </tr>

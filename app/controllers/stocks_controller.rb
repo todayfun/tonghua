@@ -4,7 +4,7 @@ class StocksController < ApplicationController
   # GET /stocks
   # GET /stocks.json
   def index
-    @stocks = Stock.where("((weekrise>0 and monthrise>0 and roe>14) or (good <> '{}' and roe>12) or (roe>20 and rate_of_profit>20)) and bad='{}'").order("stamp asc,monthrise desc,weekrise desc").all
+    @stocks = Stock.where("((weekrise>0 and monthrise>0 and roe>14) or (good <> '{}' and roe>12) or (roe>15 and rate_of_profit>15)) and bad='{}' and rate_of_profit>5").order("stamp asc,monthrise desc,weekrise desc").all
 
     respond_to do |format|
       format.html # index.html.erb
@@ -36,8 +36,8 @@ class StocksController < ApplicationController
     dest_currency = @stock.stamp=='us' ? FinReport::CURRENCY_USD : FinReport::CURRENCY_HKD
 
     # 计算年报
-    fy_matrix = FinReport.fy_matrix @stock,@fin_reports
-    fd_years = fy_matrix[:fd_year].reverse
+    @fy_matrix = FinReport.fy_matrix @stock,@fin_reports
+    fd_years = @fy_matrix[:fd_year].reverse
 
     weeklines = Weekline.where(code:@stock.code).where("day > '#{2.year.ago}'").order("day asc").select("day,close").all
     days = weeklines.map {|r| r.day}
@@ -50,54 +50,54 @@ class StocksController < ApplicationController
       #@fy_chart[:price] = highchart_line("年报-股价",days || fd_years,series)
 
       series = []
-      series << ["收益增长率",fy_matrix[:up_rate_of_profit].reverse]
-      series << ["P/E",fy_matrix[:pe].reverse]
+      series << ["收益增长率",@fy_matrix[:up_rate_of_profit].reverse]
+      series << ["P/E",@fy_matrix[:pe].reverse]
       @fy_chart[:up_rate_of_profit] = highchart_line("年报-收益增长率",fd_years,series)
 
       series = []
-      series << ["每股收益(#{dest_currency}",fy_matrix[:fd_profit_base_share].reverse]
-      series << ["每股现金(#{dest_currency})",fy_matrix[:fd_cash_base_share].reverse]
+      series << ["每股收益(#{dest_currency}",@fy_matrix[:fd_profit_base_share].reverse]
+      series << ["每股现金(#{dest_currency})",@fy_matrix[:fd_cash_base_share].reverse]
       @fy_chart[:profit_base_share] = highchart_line("年报-每股收益",fd_years,series)
     end
 
     # 计算季报
-    q_matrix = FinReport.q_matrix @stock,@fin_reports
-    q_arr = q_matrix[:fd_repdate].reverse
+    @q_matrix = FinReport.q_matrix @stock,@fin_reports
+    q_arr = @q_matrix[:fd_repdate].reverse
 
     @q_chart = {}
     if !q_arr.blank?
       series = []
-      series << ["股价(#{dest_currency})",prices || q_matrix[:fd_price].reverse]
+      series << ["股价(#{dest_currency})",prices || @q_matrix[:fd_price].reverse]
       @q_chart[:price_quarter] = highchart_line("季报-股价",days || q_arr,series)
 
       series = []
-      series << ["P/E",q_matrix[:pe].reverse]
-      series << ["收益增长率",q_matrix[:up_rate_of_profit].reverse]
+      series << ["P/E",@q_matrix[:pe].reverse]
+      series << ["收益增长率",@q_matrix[:up_rate_of_profit].reverse]
       @q_chart[:pe_of_lastyear] = highchart_line("季报-PE",q_arr,series)
 
       series = []
-      series << ["每股收益(#{dest_currency})",q_matrix[:fd_profit_base_share].reverse]
-      series << ["4季度累计(#{dest_currency})",q_matrix[:sum_profit_of_lastyear].reverse]
+      series << ["每股收益(#{dest_currency})",@q_matrix[:fd_profit_base_share].reverse]
+      series << ["4季度累计(#{dest_currency})",@q_matrix[:sum_profit_of_lastyear].reverse]
       @q_chart[:profit_base_share] = highchart_line("季报-每股收益",q_arr,series)
 
       series = []
-      series << ["经营活动净额(#{dest_currency})",q_matrix[:operating_cash].reverse]
+      series << ["经营活动净额(#{dest_currency})",@q_matrix[:operating_cash].reverse]
       @q_chart[:cash_base_share] = highchart_line("季报-每股现金流",q_arr,series)
 
       series = []
-      series << ["权益回报率",q_matrix[:profit_of_holderright].reverse]
-      series << ["收益增长率",q_matrix[:up_rate_of_pure_profit].reverse]
+      series << ["权益回报率",@q_matrix[:profit_of_holderright].reverse]
+      series << ["收益增长率",@q_matrix[:up_rate_of_pure_profit].reverse]
       @fy_chart[:profit_of_holderright] = highchart_line("季报-权益回报率%",q_arr,series)
 
       series = []
-      series << ["现金净额(#{dest_currency})",q_matrix[:fd_cash_base_share].reverse]
-      series << ["投资活动净额(#{dest_currency})",q_matrix[:invest_cash].reverse]
-      series << ["融资活动净额(#{dest_currency})",q_matrix[:loan_cash].reverse]
+      series << ["现金净额(#{dest_currency})",@q_matrix[:fd_cash_base_share].reverse]
+      series << ["投资活动净额(#{dest_currency})",@q_matrix[:invest_cash].reverse]
+      series << ["融资活动净额(#{dest_currency})",@q_matrix[:loan_cash].reverse]
       @fy_chart[:cash_invest_base_share] = highchart_line("季报-每股投融资现金流",q_arr,series)
 
       series = []
-      series << ["股东权益占比",q_matrix[:fd_rights_rate].reverse]
-      series << ["流动负债/资产",q_matrix[:fd_debt_rate].reverse]
+      series << ["股东权益占比",@q_matrix[:fd_rights_rate].reverse]
+      series << ["流动负债/资产",@q_matrix[:fd_debt_rate].reverse]
       @fy_chart[:debt_rate] = highchart_line("季报-权益债务",q_arr,series)
     end
 

@@ -43,7 +43,9 @@ class FinSummary < ActiveRecord::Base
       avg_rate_of_profit = (rate_of_profit.sum / rate_of_profit.count).round(2)
     end
 
-    stock.update_attributes good:good,bad:bad,roe:avg_roe, rate_of_profit:avg_rate_of_profit
+    info = self.calc_fin_summary stock, q_matrix,fy_matrix,fin_reports
+
+    stock.update_attributes good:good,bad:bad,roe:avg_roe, rate_of_profit:avg_rate_of_profit, info:info
 
     #FinSummary.create code:stock.code,repdate:fin_reports.first.fd_repdate,type:TYPE_QUARTER,matrix:q_matrix,matrix_meta:q_matrix_meta
   end
@@ -62,9 +64,10 @@ class FinSummary < ActiveRecord::Base
   # B.按权益价值计算回报率
   # 权益=每股权益*(1+α)^n* 权益收益率=每股收益*(1+α)^n
   # 卖价=权益÷ 政府债券收益率(5%~8%)
-
+  #
   # 复利计算: 每股收益*(1+α)^n / (5%~8%) = 买入价 * (1+β复利)^n  ，推导出:
   #    PE=(1+α)^n /  (1+β复利)^n / (5%~8%)
+  #    β复利 = ((1+α)^n / (5%~8%) / PE)^1/n - 1
   #
   # 假设 n=6，债券利率7%，则:
   # β=0.2，α=0.15 => PE=0.77*14.3=10
@@ -92,7 +95,7 @@ class FinSummary < ActiveRecord::Base
       flg &&= q_matrix[:up_rate_of_profit][0] && q_matrix[:up_rate_of_profit][0]>15
       flg &&= q_matrix[:up_rate_of_profit][1] && q_matrix[:up_rate_of_profit][1]>10
 
-      flg &&= stock.pe < ((1+avg_rate*0.01)/(1+0.2))**6 * 14.3
+      flg &&= stock.pe < ((1+avg_rate*0.01)/(1+0.17))**6 * 14.3
 
       if flg
         uprate_vs_pe = "#{(q_matrix[:up_rate_of_profit][0]/stock.pe).round(1)},avg_rate:#{avg_rate}%"
@@ -147,6 +150,46 @@ class FinSummary < ActiveRecord::Base
     end
 
     good
+  end
+
+  def self.calc_fin_summary(stock, q_matrix, fy_matrix, fin_reports)
+    info = {}
+
+    arr_rate = q_matrix[:up_rate_of_profit].compact()[0,4]
+    if arr_rate.size < 3
+      return {}
+    end
+
+    info[:arr_rate] = arr_rate
+
+    avg_rate = (arr_rate.sum/arr_rate.count).round(2)
+    if avg_rate>1 && stock.pe > 1
+      fuli = self.calc_fuli avg_rate,stock.pe,5
+      info["复利"]=fuli
+    end
+
+    fin_report = nil
+    fin_reports.each do |item|
+      if item.fd_type == FinReport::TYPE_ANNUAL
+        fin_report = item
+        break
+      end
+    end
+
+    if fin_report
+      info["权益回报率"] = fy_matrix[:profit_of_holderright].compact()[0,4]
+      info["净利润/长期负债"] = (fin_report.profit/fin_report.fd_non_liquid_debts).round(1) if fin_report.profit && fin_report.profit>0 && fin_report.fd_non_liquid_debts
+    end
+
+    info
+  end
+
+
+  # 复利计算: 每股收益*(1+α)^n / (5%~8%) = 买入价 * (1+β复利)^n  ，推导出:
+  #    β复利 = ((1+α)^n / (5%~8%) / PE)^1/n - 1
+  def self.calc_fuli(growth_rate,pe,n)
+    fuli = ((((1+growth_rate*0.01)**n * 14.3 / pe) ** (1.0/n) - 1)*100).round(2)
+    fuli
   end
 
   # 计算现金流不行的

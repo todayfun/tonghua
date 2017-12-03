@@ -165,6 +165,14 @@ class FinReport < ActiveRecord::Base
     cash_json = ActiveSupport::JSON.decode(cash_json_str)
     cash_report = cash_json["report"]
 
+    regexp = /<p id="benefit">(.*)<\/p>/
+    match_data = rsp.match(regexp)
+    return [] unless match_data
+
+    benefit_json_str = match_data[1]
+    benefit_json = ActiveSupport::JSON.decode(benefit_json_str)
+    benefit_report = benefit_json["report"]
+
     records = []
     cols = []
     # fd_year, fd_type
@@ -219,9 +227,13 @@ class FinReport < ActiveRecord::Base
     cash_row_title = cash_json["title"][1..-1].map{|arr| arr[0].strip}
     cash_row_label = {operating_cash:["经营活动现金流量净额","经营活动产生的现金流量净额"],invest_cash:["投资活动现金流量净额","投资活动产生的现金流量净额"],loan_cash:["筹资活动现金流量净额","筹资活动产生的现金流量净额"]}
 
+    benefit_row_title = benefit_json["title"][1..-1].map{|arr| arr[0].strip}
+    benefit_row_label = {profit:["净利润"]}
+
     keyindex_row_idx = calc_row_idx keyindex_row_label,keyindex_row_title,stock.code
     debt_row_idx = calc_row_idx debt_row_label,debt_row_title,stock.code
     cash_row_idx = calc_row_idx cash_row_label,cash_row_title,stock.code
+    benefit_row_idx = calc_row_idx benefit_row_label,benefit_row_title,stock.code
 
     # 填充表格
     cols.each_with_index do |col,idx|
@@ -235,6 +247,10 @@ class FinReport < ActiveRecord::Base
 
       cash_row_idx.each do |field,row|
         records[idx][field] = cash_report[row][col]
+      end
+
+      benefit_row_idx.each do |field,row|
+        records[idx][field] = benefit_report[row][col]
       end
     end
 
