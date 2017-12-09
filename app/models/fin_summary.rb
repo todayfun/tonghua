@@ -89,7 +89,8 @@ class FinSummary < ActiveRecord::Base
     flg = stock.pe&&stock.pe>5&&stock.pe<70
 
     if flg && !arr_rate.empty?
-      avg_rate = (arr_rate.sum/arr_rate.count).round(2)
+      arr_weight = [1,0.9,0.85,0.8]
+      avg_rate = (self.weighted_average arr_rate, arr_weight).round(2)
 
       flg &&= avg_rate>15 && arr_rate.min > 5
       flg &&= q_matrix[:up_rate_of_profit][0] && q_matrix[:up_rate_of_profit][0]>15
@@ -155,19 +156,29 @@ class FinSummary < ActiveRecord::Base
   def self.calc_fin_summary(stock, q_matrix, fy_matrix, fin_reports)
     info = {}
 
+    # 现金流分析
+    [0,1].each do |i|
+      cash_state = q_matrix[:cash_state][i]
+      info["现金流#{i}"]=cash_state[:label] if cash_state && cash_state[:label]
+    end
+
+    # 收益增长率分析
     arr_rate = q_matrix[:up_rate_of_profit].compact()[0,4]
-    if arr_rate.size < 3
-      return {}
+    if arr_rate.size > 2
+      arr_weight = [1,0.9,0.85,0.8]
+      avg_rate = (self.weighted_average arr_rate, arr_weight).round(2)
+      if avg_rate>1 && stock.pe > 1
+        fuli = self.calc_fuli avg_rate,stock.pe,5
+        info["复利"]=fuli
+      end
+
+      info[:arr_rate] = arr_rate
     end
 
-    avg_rate = (arr_rate.sum/arr_rate.count).round(2)
-    if avg_rate>1 && stock.pe > 1
-      fuli = self.calc_fuli avg_rate,stock.pe,5
-      info["复利"]=fuli
-    end
+    # 权益回报率
+    info["权益回报率"] = fy_matrix[:profit_of_holderright].compact()[0,4]
 
-    info[:arr_rate] = arr_rate
-
+    # 净利润/长期负债分析
     fin_report = nil
     fin_reports.each do |item|
       if item.fd_type == FinReport::TYPE_ANNUAL
@@ -177,13 +188,19 @@ class FinSummary < ActiveRecord::Base
     end
 
     if fin_report
-      info["权益回报率"] = fy_matrix[:profit_of_holderright].compact()[0,4]
       info["净利润/长期负债"] = (fin_report.profit/fin_report.fd_non_liquid_debts).round(1) if fin_report.profit && fin_report.profit>0 && fin_report.fd_non_liquid_debts
     end
 
     info
   end
 
+  def self.weighted_average(arr_value, arr_weight)
+    weighted_value = []
+    sum_weight = 0
+    arr_value.each_with_index {|v, i| weighted_value[i] = (arr_weight[i]||1)*v; sum_weight += (arr_weight[i]||1);}
+
+    weighted_value.sum / sum_weight
+  end
 
   # 复利计算: 每股收益*(1+α)^n / (5%~8%) = 买入价 * (1+β复利)^n  ，推导出:
   #    β复利 = ((1+α)^n / (5%~8%) / PE)^1/n - 1
@@ -202,15 +219,14 @@ class FinSummary < ActiveRecord::Base
       bad = {}
     end
 
-    [0,1].each do |idx|
-      if q_matrix[:operating_cash][idx] && q_matrix[:invest_cash][idx] && q_matrix[:loan_cash][idx]
-        if q_matrix[:operating_cash][idx]<0 && q_matrix[:invest_cash][idx]>0
-          bad["cash_status_#{idx}"] = "cash_out_1"
-        elsif q_matrix[:operating_cash][idx]<0 && q_matrix[:invest_cash][idx]<0 && q_matrix[:loan_cash][idx]<0
-          bad["cash_status_#{idx}"] = "cash_out_all"
-        end
-      end
+    # 现金流分析
+    cash_state = q_matrix[:cash_state][0]
+    if cash_state && cash_state[:level]&&cash_state[:level] < 0
+      bad[:cash_label]=cash_state[:label]
+    end
 
+    # 权益负债占比
+    [0,1].each do |idx|
       if q_matrix[:fd_rights_rate][idx] && q_matrix[:fd_rights_rate][idx] < 0.6
         bad["rights_rate_#{idx}"] = q_matrix[:fd_rights_rate][idx]
       end

@@ -1,12 +1,14 @@
 <h1>Listing stocks <%= @stocks.size %></h1>
 
-<table>
+<table border="1" cellspacing="0" cellpadding="1">
   <tr>
     <th>Code</th>
     <th>Name</th>
     <th>增长_VS_PE</th>
     <th>净利润增长</th>
     <th>财务信息</th>
+    <th></th>
+    <th></th>
   </tr>
 
 <% @stocks.each do |stock| %>

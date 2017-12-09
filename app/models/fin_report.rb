@@ -631,7 +631,7 @@ class FinReport < ActiveRecord::Base
     currency = nil
 
     q_matrix = {fd_repdate:[],fd_price:[],fd_profit_base_share:[],fd_cash_base_share:[],fd_debt_rate:[],fd_rights_rate:[],
-                operating_cash:[],invest_cash:[],loan_cash:[],up_rate_of_profit:[],up_rate_of_pure_profit:[],sum_profit_of_lastyear:[],pe:[],profit_of_holderright:[]}
+                operating_cash:[],invest_cash:[],loan_cash:[],up_rate_of_profit:[],up_rate_of_pure_profit:[],sum_profit_of_lastyear:[],pe:[],profit_of_holderright:[],cash_state:[]}
     cnt = 0
     q_matrix_meta = {idx:[],profit_base_share:{},operating_cash:{},pe:{},up_rate_of_profit:{},up_rate_of_pure_profit:{},sum_profit_of_lastyear:{},price:{},profit:{}}
     fin_reports.each do |r|
@@ -645,6 +645,7 @@ class FinReport < ActiveRecord::Base
       q_matrix[:operating_cash] << currency_translate(cash_base_share(stock.gb,r.operating_cash),currency,dest_currency)
       q_matrix[:invest_cash] << currency_translate(cash_base_share(stock.gb,r.invest_cash),currency,dest_currency)
       q_matrix[:loan_cash] << currency_translate(cash_base_share(stock.gb,r.loan_cash),currency,dest_currency)
+      q_matrix[:cash_state] << cash_summary(q_matrix[:operating_cash].last.to_f, q_matrix[:invest_cash].last.to_f, q_matrix[:loan_cash].last.to_f)
       q_matrix[:profit_of_holderright] << r.profit_of_holderright
 
       uk = "#{r.fd_year},#{r.fd_type}"
@@ -715,6 +716,55 @@ class FinReport < ActiveRecord::Base
     [q_matrix,q_matrix_meta]
   end
 
+  # 1、经营+，投资+，融资+。自给自足，投资方面收益状况良好，这时仍然进行融资，如果没有新的投资机会，会造成资金浪费。
+  # 2、经营+，投资+，融资-。经营和投资良性循环，融资活动的负数是由于偿还借款引起，不足已威胁企业的财务状况。
+  # 3、经营+，投资-，融资+。经营状况良好，通过筹集资金进行投资，企业往往是处于扩张时期，这时我们应着重分析投资项目的盈利能力。
+  # 4、经营+，投资-，融资-。经营状况虽然良好，但企业一方面在偿还以前的债务，另一方面要继续投资，所以应随时关注经营状况的变化，防止财务状况恶化。
+  # 5、经营-，投资+，融资+。这种公司靠借钱维持生产经营的需要，财务状况可能恶化，应着重分析投资活动现金净流入是来自投资收益还是收回投资，如果是后者，企业的形势将非常严峻。
+  # 6、经营-，投资+，融资-。经营活动已经发出危险信号，如果投资活动现金流入主要来自收回投资，则企业将处于破产的边缘，需要高度警惕。
+  # 7、经营-，投资-，融资+。企业靠借债维持日常经营和生产规模的扩大，财务状况很不稳定，如果是处于投入期的企业，一旦度过难关，还可能有发展，如果是成长期或稳定期的企业，则非常危险。
+  # 8、经营-，投资-，融资-。企业财务状况危急，必须及时扭转，这样的情况往往发生在扩张时期，由于市场变化导致经营状况恶化，加上扩张时投入了大量资金，会使企业陷入进退两难的境地。
+  def self.cash_summary(operating_cash, invest_cash, loan_cash)
+    cash_state = {}
+
+    sum_cash = operating_cash + invest_cash + loan_cash
+    if sum_cash > 0
+      tag = "净流入"
+    elsif sum_cash > operating_cash.abs * -0.5
+      tag = "净流出"
+    else
+      tag = "净流出压力大"
+    end
+
+    if operating_cash>0 && invest_cash>0 && loan_cash>0
+      cash_state[:label] = "经营+，投资+，融资+，很好"
+      cash_state[:level] = 2
+    elsif operating_cash>0 && invest_cash>0 && loan_cash<0
+      cash_state[:label] = "经营+，投资+，融资-，#{tag}"
+      cash_state[:level] = 2
+    elsif operating_cash>0 && invest_cash<0 && loan_cash>0
+      cash_state[:label] = "经营+，投资-，融资+，#{tag}，扩张期关注盈利"
+      cash_state[:level] = 1
+    elsif operating_cash>0 && invest_cash<0 && loan_cash<0
+      cash_state[:label] = "经营+，投资-，融资-，#{tag}"
+      cash_state[:level] = 0
+    elsif operating_cash<0 && invest_cash>0 && loan_cash>0
+      cash_state[:label] = "经营-，投资+，融资+，借钱经营随时恶化"
+      cash_state[:level] = -1
+    elsif operating_cash<0 && invest_cash>0 && loan_cash<0
+      cash_state[:label] = "经营-，投资+，融资-，危险"
+      cash_state[:level] = -2
+    elsif operating_cash<0 && invest_cash<0 && loan_cash>0
+      cash_state[:label] = "经营-，投资-，融资+，很不稳定危险"
+      cash_state[:level] = -2
+    elsif operating_cash<0 && invest_cash<0 && loan_cash<0
+      cash_state[:label] = "经营-，投资-，融资-，危急"
+      cash_state[:level] = -3
+    end
+
+    cash_state
+  end
+  
   def self.close_price(klines, day)
     r = nil
     klines.each do |row|
