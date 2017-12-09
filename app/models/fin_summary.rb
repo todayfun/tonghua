@@ -93,7 +93,7 @@ class FinSummary < ActiveRecord::Base
 
       flg &&= avg_rate>15 && arr_rate.min > 5
       flg &&= q_matrix[:up_rate_of_profit][0] && q_matrix[:up_rate_of_profit][0]>15
-      flg &&= q_matrix[:up_rate_of_profit][1] && q_matrix[:up_rate_of_profit][1]>10
+      flg &&= q_matrix[:up_rate_of_profit][1] && q_matrix[:up_rate_of_profit][1]>5
 
       flg &&= stock.pe < ((1+avg_rate*0.01)/(1+0.17))**6 * 14.3
 
@@ -160,13 +160,13 @@ class FinSummary < ActiveRecord::Base
       return {}
     end
 
-    info[:arr_rate] = arr_rate
-
     avg_rate = (arr_rate.sum/arr_rate.count).round(2)
     if avg_rate>1 && stock.pe > 1
       fuli = self.calc_fuli avg_rate,stock.pe,5
       info["复利"]=fuli
     end
+
+    info[:arr_rate] = arr_rate
 
     fin_report = nil
     fin_reports.each do |item|
@@ -211,7 +211,7 @@ class FinSummary < ActiveRecord::Base
         end
       end
 
-      if q_matrix[:fd_rights_rate][idx] && q_matrix[:fd_rights_rate][idx] < 0.65
+      if q_matrix[:fd_rights_rate][idx] && q_matrix[:fd_rights_rate][idx] < 0.6
         bad["rights_rate_#{idx}"] = q_matrix[:fd_rights_rate][idx]
       end
     end
