@@ -81,8 +81,11 @@ class StocksController < ApplicationController
       @q_chart[:profit_base_share] = highchart_line("季报-每股收益",q_arr,series)
 
       series = []
-      series << ["经营活动净额(#{dest_currency})",@q_matrix[:operating_cash].reverse]
-      @q_chart[:cash_base_share] = highchart_line("季报-每股现金流",q_arr,series)
+      series << ["经营净额(#{dest_currency})",@q_matrix[:operating_cash].reverse]
+      series << ["投资净额(#{dest_currency})",@q_matrix[:invest_cash].reverse]
+      series << ["融资净额(#{dest_currency})",@q_matrix[:loan_cash].reverse]
+      series << ["总现金(#{dest_currency})",@q_matrix[:cash_and_deposit].reverse]
+      @q_chart[:cash_base_share] = highchart_line("季报-现金流",q_arr,series)
 
       series = []
       series << ["权益回报率",@q_matrix[:profit_of_holderright].reverse]
@@ -91,8 +94,8 @@ class StocksController < ApplicationController
 
       series = []
       series << ["现金净额(#{dest_currency})",@q_matrix[:fd_cash_base_share].reverse]
-      series << ["投资活动净额(#{dest_currency})",@q_matrix[:invest_cash].reverse]
-      series << ["融资活动净额(#{dest_currency})",@q_matrix[:loan_cash].reverse]
+      series << ["投资活动净额(#{dest_currency})",@q_matrix[:invest_cash_base_share].reverse]
+      series << ["融资活动净额(#{dest_currency})",@q_matrix[:loan_cash_base_share].reverse]
       @fy_chart[:cash_invest_base_share] = highchart_line("季报-每股投融资现金流",q_arr,series)
 
       series = []
