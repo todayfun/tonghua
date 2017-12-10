@@ -156,8 +156,10 @@ class FinSummary < ActiveRecord::Base
   def self.calc_fin_summary(stock, q_matrix, fy_matrix, fin_reports)
     info = {}
 
+    info[:key] = {}
+
     # 现金流分析
-    [0,1].each do |i|
+    (0..2).each do |i|
       cash_state = q_matrix[:cash_state][i]
       info["现金流#{i}"]=cash_state[:label] if cash_state && cash_state[:label]
     end
@@ -169,7 +171,7 @@ class FinSummary < ActiveRecord::Base
       avg_rate = (self.weighted_average arr_rate, arr_weight).round(2)
       if avg_rate>1 && stock.pe > 1
         fuli = self.calc_fuli avg_rate,stock.pe,5
-        info["复利"]=fuli
+        info[:key]["复利"] = fuli
       end
 
       info[:arr_rate] = arr_rate
@@ -188,7 +190,10 @@ class FinSummary < ActiveRecord::Base
     end
 
     if fin_report
-      info["净利润/长期负债"] = (fin_report.profit/fin_report.fd_non_liquid_debts).round(1) if fin_report.profit && fin_report.profit>0 && fin_report.fd_non_liquid_debts
+      if fin_report.profit && fin_report.profit>0 && fin_report.fd_non_liquid_debts
+        tmp_rate = (fin_report.profit/fin_report.fd_non_liquid_debts).round(1)
+        info[:key]["净利润/长期负债"] = tmp_rate
+      end
     end
 
     info
@@ -285,11 +290,10 @@ class FinSummary < ActiveRecord::Base
     if flg
       arr_profit = fy_matrix[:profit].compact()[0,6]
       avg_profit = arr_profit.sum / arr_profit.size
-      sum_profit = (avg_profit * 6).round(2)
-      flg &&= fy_matrix[:fd_non_liquid_debts][0] > sum_profit
+      tmp_rate = (avg_profit / fy_matrix[:fd_non_liquid_debts][0]).round(2)
 
-      if flg
-        bad["long_debts vs 6years_profit"]="#{fy_matrix[:fd_non_liquid_debts][0]} > #{sum_profit}"
+      if tmp_rate < 0.17
+        bad["high_debts_rate"]=tmp_rate
       end
     end
 
