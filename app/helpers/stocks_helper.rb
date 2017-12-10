@@ -21,4 +21,10 @@ module StocksHelper
         ""
     end
   end
+
+  def rise_tags(stock)
+    tags = (stock.good).map{|k,v| "#{k}:#{v}"};
+    tags << riselabel(stock);
+    tags << stock.rate_of_profit
+  end
 end
