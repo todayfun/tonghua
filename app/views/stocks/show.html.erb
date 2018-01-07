@@ -12,9 +12,9 @@
   <%= link_to "踩", {action:"mark",id:@stock.id,mark:"bad"}, :remote=>true %>
   <%= link_to "clear", {action:"mark",id:@stock.id,mark:"clear"}, :remote=>true %>
   <br>
-  <%= @stock.good %>
+  <%= @stock.good.map{|k,v| "#{k}:#{v}"}.join("<br/>").html_safe %>
   <br>
-  <%= @stock.info %>
+  <%= @stock.info["key"].merge!(pe:@stock.pe);@stock.info.map{|k,v| "#{k}:#{v}"}.join("<br/>").html_safe %>
 
   <table>
     <tr>
