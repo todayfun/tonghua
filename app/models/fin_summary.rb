@@ -222,7 +222,7 @@ class FinSummary < ActiveRecord::Base
   # 经营-，投资+，融资+；经营-，投资+，融资-；经营-，投资-，融资-；
   def self.stock_bad(stock,q_matrix,q_matrix_meta,fy_matrix)
     # 3个月以前的 手工标记丢掉
-    if stock.bad && stock.bad["mark_at"] && stock.bad["mark_at"] > 3.month.ago.to_date.to_s
+    if stock.bad && stock.bad["mark_at"] && stock.bad["mark_at"] > 6.month.ago.to_date.to_s
       bad = {"mark_at"=>stock.bad["mark_at"]}
     else
       bad = {}
