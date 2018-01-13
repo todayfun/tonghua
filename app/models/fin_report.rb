@@ -631,7 +631,7 @@ class FinReport < ActiveRecord::Base
 
     q_matrix = {fd_repdate:[],fd_price:[],fd_profit_base_share:[],fd_cash_base_share:[],fd_debt_rate:[],fd_rights_rate:[],
                 operating_cash_base_share:[],invest_cash_base_share:[],loan_cash_base_share:[],up_rate_of_profit:[],up_rate_of_pure_profit:[],sum_profit_of_lastyear:[],pe:[],profit_of_holderright:[],
-                cash_state:[],cash_meta:[],operating_cash:[],invest_cash:[],loan_cash:[],cash_and_deposit:[]}
+                cash_state:[],cash_meta:[],operating_cash:[],invest_cash:[],loan_cash:[],cash_and_deposit:[],profit:[]}
     cnt = 0
     q_matrix_meta = {idx:[],profit_base_share:{},operating_cash:{},pe:{},up_rate_of_profit:{},up_rate_of_pure_profit:{},sum_profit_of_lastyear:{},price:{},profit:{},cash_meta:{}}
     fin_reports.each do |r|
@@ -646,16 +646,17 @@ class FinReport < ActiveRecord::Base
       q_matrix[:invest_cash_base_share] << currency_translate(cash_base_share(stock.gb,r.invest_cash),currency,dest_currency)
       q_matrix[:loan_cash_base_share] << currency_translate(cash_base_share(stock.gb,r.loan_cash),currency,dest_currency)
       q_matrix[:profit_of_holderright] << r.profit_of_holderright
-      q_matrix[:cash_meta] << {operating_cash:r.operating_cash.to_f, invest_cash:r.invest_cash.to_f, loan_cash:r.loan_cash.to_f,cash_and_deposit:r.fd_cash_and_deposit}
       q_matrix[:operating_cash] << r.operating_cash
       q_matrix[:invest_cash] << r.invest_cash
       q_matrix[:loan_cash] << r.loan_cash
       q_matrix[:cash_and_deposit] << r.fd_cash_and_deposit
+      q_matrix[:profit] << r.profit
 
       uk = "#{r.fd_year},#{r.fd_type}"
       q_matrix_meta[:price][uk] = q_matrix[:fd_price].last
       q_matrix_meta[:profit_base_share][uk] = q_matrix[:fd_profit_base_share].last
       q_matrix_meta[:profit][uk] = r.profit
+      q_matrix_meta[:cash_meta][uk] = {operating_cash:r.operating_cash.to_f, invest_cash:r.invest_cash.to_f, loan_cash:r.loan_cash.to_f,cash_and_deposit:r.fd_cash_and_deposit}
       q_matrix_meta[:idx] << [r.fd_year,r.fd_type]
 
       cnt += 1
@@ -682,10 +683,12 @@ class FinReport < ActiveRecord::Base
       q_matrix[:up_rate_of_pure_profit] << rate
       q_matrix_meta[:up_rate_of_pure_profit][uk] = rate
 
-      cash_meta = q_matrix[:cash_meta][idx]
-      prev_cash_meta = q_matrix[:cash_meta][idx+1]
+      cash_meta = q_matrix_meta[:cash_meta][uk]
+      prev_fy_year_uk = "#{prev_year},#{TYPE_ANNUAL}"
+      prev_cash_meta = q_matrix_meta[:cash_meta][prev_fy_year_uk]
+      cash_name = "#{e[0]}#{e[1][-2..-1]}"
       if cash_meta && prev_cash_meta
-        q_matrix[:cash_state] << cash_summary(cash_meta[:operating_cash],cash_meta[:invest_cash],cash_meta[:loan_cash],cash_meta[:cash_and_deposit],prev_cash_meta[:cash_and_deposit])
+        q_matrix[:cash_state] << cash_summary(cash_meta[:operating_cash],cash_meta[:invest_cash],cash_meta[:loan_cash],cash_meta[:cash_and_deposit],prev_cash_meta[:cash_and_deposit],cash_name)
       end
 
       prev_fy_uk = "#{prev_year},#{FinReport::TYPE_ANNUAL}"
@@ -733,7 +736,7 @@ class FinReport < ActiveRecord::Base
   # 6、经营-，投资+，融资-。经营活动已经发出危险信号，如果投资活动现金流入主要来自收回投资，则企业将处于破产的边缘，需要高度警惕。
   # 7、经营-，投资-，融资+。企业靠借债维持日常经营和生产规模的扩大，财务状况很不稳定，如果是处于投入期的企业，一旦度过难关，还可能有发展，如果是成长期或稳定期的企业，则非常危险。
   # 8、经营-，投资-，融资-。企业财务状况危急，必须及时扭转，这样的情况往往发生在扩张时期，由于市场变化导致经营状况恶化，加上扩张时投入了大量资金，会使企业陷入进退两难的境地。
-  def self.cash_summary(operating_cash, invest_cash, loan_cash, cash_and_deposit, prev_cash_and_deposit)
+  def self.cash_summary(operating_cash, invest_cash, loan_cash, cash_and_deposit, prev_cash_and_deposit,name)
     cash_state = {}
 
     return cash_state if cash_and_deposit.nil? or prev_cash_and_deposit.nil?
@@ -782,6 +785,7 @@ class FinReport < ActiveRecord::Base
     end
 
     cash_state[:label] = tags.join(',')
+    cash_state[:name] = name
 
     cash_state
   end

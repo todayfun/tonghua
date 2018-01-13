@@ -37,15 +37,15 @@ class FinSummary < ActiveRecord::Base
       avg_roe = (roe.sum / roe.count).round(2)
     end
 
-    rate_of_profit = fy_matrix[:up_rate_of_pure_profit].compact()[0,2]
-    avg_rate_of_profit = nil
-    unless rate_of_profit.empty?
-      avg_rate_of_profit = (rate_of_profit.sum / rate_of_profit.count).round(2)
+    up_rate_of_profit = fy_matrix[:up_rate_of_pure_profit].compact()[0,2]
+    avg_up_rate_of_profit = nil
+    unless up_rate_of_profit.empty?
+      avg_up_rate_of_profit = (up_rate_of_profit.sum / up_rate_of_profit.count).round(2)
     end
 
     info = self.calc_fin_summary stock, q_matrix,fy_matrix,fin_reports
 
-    stock.update_attributes good:good,bad:bad,roe:avg_roe, rate_of_profit:avg_rate_of_profit, info:info
+    stock.update_attributes good:good,bad:bad,roe:avg_roe, rate_of_profit:avg_up_rate_of_profit, info:info
 
     #FinSummary.create code:stock.code,repdate:fin_reports.first.fd_repdate,type:TYPE_QUARTER,matrix:q_matrix,matrix_meta:q_matrix_meta
   end
@@ -77,7 +77,7 @@ class FinSummary < ActiveRecord::Base
   # β=0.2，α=0.5 => PE=3.8*14.3=54
   def self.stock_good(stock,q_matrix,q_matrix_meta,fy_matrix)
     # 3个月以前的 手工标记丢掉
-    if stock.good && stock.good["mark_at"] && stock.good["mark_at"] > 3.month.ago.to_date.to_s
+    if stock.good && stock.good["mark_at"]
       good = {"mark_at"=>stock.good["mark_at"]}
     else
       good = {}
@@ -158,27 +158,25 @@ class FinSummary < ActiveRecord::Base
 
     info[:key] = {}
 
-    # 现金流分析
-    (0..2).each do |i|
-      cash_state = q_matrix[:cash_state][i]
-      info["现金流#{i}"]=cash_state[:label] if cash_state && cash_state[:label]
-    end
-
     # 收益增长率分析
-    arr_rate = q_matrix[:up_rate_of_profit].compact()[0,4]
+    arr_rate = q_matrix[:up_rate_of_profit].compact()[0,6]
+    arr_rate = fy_matrix[:up_rate_of_pure_profit].compact()[0,6] if arr_rate.size <=2
     if arr_rate.size > 2
-      arr_weight = [1,0.9,0.85,0.8]
+      arr_weight = [1,0.9,0.85,0.8,0.5,0.5]
       avg_rate = (self.weighted_average arr_rate, arr_weight).round(2)
       if avg_rate>1 && stock.pe > 1
         fuli = self.calc_fuli avg_rate,stock.pe,5
-        info[:key]["复利"] = fuli
+        info[:key]["复利(5年)"] = fuli
       end
 
-      info[:arr_rate] = arr_rate
+      info["收益增长率Q"] = arr_rate
     end
 
     # 权益回报率
-    info["权益回报率"] = fy_matrix[:profit_of_holderright].compact()[0,4]
+    info["权益回报率FY"] = fy_matrix[:profit_of_holderright].compact()[0,6]
+
+    # 净利润增长率
+    info["净利润增长率FY"] = fy_matrix[:up_rate_of_pure_profit].compact()[0,6]
 
     # 净利润/长期负债分析
     fin_report = nil
@@ -194,6 +192,12 @@ class FinSummary < ActiveRecord::Base
         tmp_rate = (fin_report.profit/fin_report.fd_non_liquid_debts).round(1)
         info[:key]["净利润/长期负债"] = tmp_rate
       end
+    end
+
+    # 现金流分析
+    (0..5).each do |i|
+      cash_state = q_matrix[:cash_state][i]
+      info["现金流#{cash_state[:name]}"]=cash_state[:label] if cash_state && cash_state[:label]
     end
 
     info

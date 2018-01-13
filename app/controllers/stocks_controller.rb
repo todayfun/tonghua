@@ -4,7 +4,12 @@ class StocksController < ApplicationController
   # GET /stocks
   # GET /stocks.json
   def index
-    @stocks = Stock.where("((weekrise>0 and monthrise>0 and roe>14) or (good <> '{}' and roe>12) or (roe>15 and rate_of_profit>15)) and bad='{}' and rate_of_profit>5").order("stamp asc,monthrise desc,weekrise desc").all
+    if params[:mark] == 'good'
+      @stocks = Stock.where("good like '%mark_at%'").order("stamp asc,monthrise desc,weekrise desc").all
+      @mark = 'good'
+    else
+      @stocks = Stock.where("((weekrise>0 and monthrise>0 and roe>14) or (good <> '{}' and roe>12) or (roe>15 and rate_of_profit>15)) and bad='{}' and rate_of_profit>5").order("stamp asc,monthrise desc,weekrise desc").all
+    end
 
     respond_to do |format|
       format.html # index.html.erb
@@ -88,8 +93,12 @@ class StocksController < ApplicationController
       @q_chart[:cash_base_share] = highchart_line("季报-现金流",q_arr,series)
 
       series = []
+      series << ["净利润(#{dest_currency})",@fy_matrix[:profit].reverse]
+      @q_chart[:profit] = highchart_line("年报-净利润",fd_years,series)
+
+      series = []
       series << ["权益回报率",@q_matrix[:profit_of_holderright].reverse]
-      series << ["收益增长率",@q_matrix[:up_rate_of_pure_profit].reverse]
+      series << ["净利润增长率",@q_matrix[:up_rate_of_pure_profit].reverse]
       @fy_chart[:profit_of_holderright] = highchart_line("季报-权益回报率%",q_arr,series)
 
       series = []

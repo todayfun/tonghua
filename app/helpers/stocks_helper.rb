@@ -1,4 +1,12 @@
 module StocksHelper
+  def link_to_list_with_mark(mark)
+    unless mark=="good"
+      link_to "Good", stocks_url(:mark=>"good")
+    else
+      link_to "All", stocks_url
+    end
+  end
+
   def stockurl(code, stamp)
     if stamp=="us"
       "http://gu.qq.com/#{code}/gg"
@@ -25,6 +33,6 @@ module StocksHelper
   def rise_tags(stock)
     tags = (stock.good).map{|k,v| "#{k}:#{v}"};
     tags << riselabel(stock);
-    tags << "净利润#{stock.rate_of_profit}%"
+    tags << "净利润增长率#{stock.rate_of_profit}%"
   end
 end
