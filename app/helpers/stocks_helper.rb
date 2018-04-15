@@ -1,10 +1,15 @@
 module StocksHelper
   def link_to_list_with_mark(mark)
-    unless mark=="good"
-      link_to "Good", stocks_url(:mark=>"good")
-    else
-      link_to "All", stocks_url
+    if mark.blank?
+      mark = "all"
     end
+
+    html_str = "#{mark}"
+    ["all","good","NASDAQ","NYSE"].each do |m|
+      next if mark==m
+      html_str << " | " + link_to(m, stocks_url(:mark=>m))
+    end
+    html_str.html_safe
   end
 
   def stockurl(code, stamp)

@@ -877,4 +877,29 @@ class FinReport < ActiveRecord::Base
         "invalid"
     end
   end
+
+  # N: NYSE, 纽交所，道琼斯指数
+  # OQ: NASDAQ，纳斯达克，指数
+  def self.etf_stocks_of_us(exchange_house, count=100)
+    stocks = Stock.where("code like '%#{exchange_house}' and pe>0").order("sz desc").limit(count)
+    arr_sz = []
+    arr_pe = []
+    sum_sz = 0
+    stocks.each do |s|
+      arr_sz << s.sz / 1000000.0 # 转换成百万美金
+      arr_pe << s.pe
+      sum_sz += arr_sz[-1]
+    end
+
+    sum_weight_pe = 0
+    arr_pe.each_with_index do |pe,idx|
+      sum_weight_pe += pe * arr_sz[idx]
+    end
+
+    avg_pe = sum_weight_pe / sum_sz
+
+    avg_pe
+
+    [stocks,avg_pe.round(1)]
+  end
 end

@@ -1,5 +1,7 @@
 <h1>Listing stocks <%= @stocks.size %>  <%= link_to_list_with_mark @mark%></h1>
 
+<%= "#{@mark} Weighted PE: #{@avg_pe}" if @avg_pe %>
+
 <table border="1" cellspacing="0" cellpadding="1">
   <tr>
     <th>股票</th>

@@ -4,9 +4,15 @@ class StocksController < ApplicationController
   # GET /stocks
   # GET /stocks.json
   def index
-    if params[:mark] == 'good'
+    if params[:mark] == "good"
       @stocks = Stock.where("good like '%mark_at%'").order("stamp asc,monthrise desc,weekrise desc").all
       @mark = 'good'
+    elsif params[:mark] == "NASDAQ"
+      @mark = "NASDAQ"
+      @stocks,@avg_pe = FinReport.etf_stocks_of_us Stock::EXCHANGE_NASDAQ
+    elsif params[:mark] == "NYSE"
+      @mark = "NYSE"
+      @stocks,@avg_pe = FinReport.etf_stocks_of_us Stock::EXCHANGE_NYSE
     else
       @stocks = Stock.where("((weekrise>0 and monthrise>0 and roe>14) or (good <> '{}' and roe>12) or (roe>15 and rate_of_profit>15)) and bad='{}' and rate_of_profit>5").order("stamp asc,monthrise desc,weekrise desc").all
     end
